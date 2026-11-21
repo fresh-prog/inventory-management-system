@@ -1,0 +1,13 @@
+[project]
+name = "restaurant-platform-backend"
+version = "0.1.0"
+description = "Restaurant ingredient costing, purchasing and FIFO inventory platform - backend"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
