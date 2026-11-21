@@ -1,0 +1,21 @@
+# HTTPS on the local network with Caddy's internal CA (no internet needed).
+# Install the root certificate on each device once (see docs/INSTALL.md), or replace
+# "tls internal" with a real domain when the server is reachable from the internet.
+{
+	auto_https disable_redirects
+}
+https://{$SERVER_NAME:restaurant.local}, https://localhost {
+	tls internal
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy same-origin
+		Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src 'self'; manifest-src 'self'; worker-src 'self'"
+	}
+	reverse_proxy app:8000
+}
+http:// {
+	redir https://{host}{uri} permanent
+}

@@ -1,0 +1,20 @@
+export type Ingredient = {
+  id: string; code: string; name: string; category: string | null; description: string | null;
+  base_dimension: "mass" | "volume" | "count"; base_unit: string; purchase_unit: string; consumption_unit: string;
+  is_active: boolean; version: number; min_stock_base: string;
+  conversions: { from_unit: string; from_qty: string; to_unit: string; to_qty: string; note: string | null }[];
+  current_cost: { cost_per_base_unit: string; currency: string; effective_date: string } | null;
+  suppliers: { supplier_id: string; supplier_name: string; supplier_sku: string | null; is_preferred: boolean }[];
+  on_hand_base?: string;
+};
+export type Supplier = { id: string; code: string; name: string; tax_id: string | null; contact_person: string | null;
+  phone: string | null; email: string | null; address: string | null; payment_terms_days: number | null; notes: string | null;
+  is_active: boolean; version: number; balance: string; total_purchases?: string };
+export type CostLine = { ingredient_id: string; ingredient_name: string; quantity: string; unit: string; basis: string;
+  prep_loss_rate: string; gross_quantity: string; usable_quantity: string; gross_base_quantity: string; base_unit: string;
+  cost_per_base_unit: string | null; cost: string; has_price: boolean; share_of_cost: string };
+export type RecipeCost = { cost_basis: "current"; currency: string; complete: boolean; missing_prices: string[]; lines: CostLine[];
+  batch_cost: string; cost_per_portion: string; target_food_cost_rate: string; recommended_price: string;
+  selling_price: string | null; food_cost_rate: string | null; gross_contribution: string | null; exceeds_target: boolean;
+  yield: { raw_mass_g: string; usable_mass_g: string; cooking_shrinkage_rate: string; cooked_mass_g: string;
+           portions_per_batch: string; cooked_mass_per_portion_g: string | null } };

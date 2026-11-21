@@ -1,0 +1,86 @@
+## Backend (pytest, real PostgreSQL 16) — 2026-11-21T14:20Z
+tests/test_api_auth.py::test_setup_runs_once_and_login_works PASSED
+tests/test_api_auth.py::test_wrong_password_is_generic_and_locks_out PASSED
+tests/test_api_auth.py::test_requires_token PASSED
+tests/test_api_auth.py::test_role_permissions_on_financial_actions PASSED
+tests/test_api_auth.py::test_deactivated_user_and_role_change_revoke_sessions PASSED
+tests/test_api_auth.py::test_branch_isolation PASSED
+tests/test_api_fifo.py::test_master_spec_fifo_example PASSED
+tests/test_api_fifo.py::test_partial_batch_and_spanning_three_batches PASSED
+tests/test_api_fifo.py::test_insufficient_stock_blocked_and_override PASSED
+tests/test_api_fifo.py::test_concurrent_consumption_never_oversells PASSED
+tests/test_api_fifo.py::test_consumption_is_idempotent PASSED
+tests/test_api_fifo.py::test_production_deducts_ingredients_once_with_fifo_cost PASSED
+tests/test_api_fifo.py::test_production_requires_published_version_and_permission PASSED
+tests/test_api_fifo.py::test_adjustments_need_reason_and_are_fifo_costed PASSED
+tests/test_api_fifo.py::test_stock_count_variances PASSED
+tests/test_api_fifo.py::test_dashboard_reconciles_with_records PASSED
+tests/test_api_ingredients.py::test_reference_price_gives_cost_per_base_unit PASSED
+tests/test_api_ingredients.py::test_volume_and_count_costs PASSED
+tests/test_api_ingredients.py::test_cross_dimension_requires_rule PASSED
+tests/test_api_ingredients.py::test_purchase_updates_cost_and_history_newer_date_wins PASSED
+tests/test_api_ingredients.py::test_edit_with_version_check_and_suppliers PASSED
+tests/test_api_ingredients.py::test_duplicate_code_rejected PASSED
+tests/test_api_ingredients.py::test_decimals_are_strings_not_floats PASSED
+tests/test_api_purchases.py::test_confirm_purchase_updates_everything_once PASSED
+tests/test_api_purchases.py::test_idempotent_replay_and_key_reuse PASSED
+tests/test_api_purchases.py::test_concurrent_duplicate_submissions_post_once PASSED
+tests/test_api_purchases.py::test_invoice_totals_validated PASSED
+tests/test_api_purchases.py::test_failure_mid_transaction_leaves_nothing PASSED
+tests/test_api_purchases.py::test_partial_and_full_payments_and_balances PASSED
+tests/test_api_purchases.py::test_concurrent_payments_cannot_overpay PASSED
+tests/test_api_purchases.py::test_void_payment_and_purchase PASSED
+tests/test_api_purchases.py::test_cannot_void_consumed_purchase PASSED
+tests/test_api_purchases.py::test_history_tables_are_append_only PASSED
+tests/test_api_recipes.py::test_recipe_cost_portion_price_and_yield PASSED
+tests/test_api_recipes.py::test_brief_example_recommended_price PASSED
+tests/test_api_recipes.py::test_publish_and_cost_change_creates_snapshots_preserving_history PASSED
+tests/test_api_recipes.py::test_cannot_publish_without_prices PASSED
+tests/test_api_recipes.py::test_cost_preview_writes_nothing PASSED
+tests/test_costing.py::test_brief_example_recommended_price PASSED
+tests/test_costing.py::test_batch_cost_per_portion_food_cost_and_contribution PASSED
+tests/test_costing.py::test_net_quantity_grossed_up_once PASSED
+tests/test_costing.py::test_gross_line_prep_loss_not_applied_again PASSED
+tests/test_costing.py::test_invalid_inputs PASSED
+tests/test_fifo.py::test_brief_example_15kg PASSED
+tests/test_fifo.py::test_inputs_are_not_mutated PASSED
+tests/test_fifo.py::test_blocks_insufficient_stock_by_default PASSED
+tests/test_fifo.py::test_shortfall_policy_records_uncovered_quantity PASSED
+tests/test_fifo.py::test_same_timestamp_uses_sequence_tiebreak PASSED
+tests/test_fifo.py::test_skips_quarantined_empty_and_other_branch PASSED
+tests/test_fifo.py::test_rejects_bad_quantity_and_mixed_currency PASSED
+tests/test_payables_invoice.py::test_outstanding_counts_only_posted_items PASSED
+tests/test_payables_invoice.py::test_over_allocation_and_duplicates_rejected PASSED
+tests/test_payables_invoice.py::test_invoice_arithmetic PASSED
+tests/test_payables_invoice.py::test_invoice_mismatch_reported PASSED
+tests/test_recovery.py::test_backup_and_restore_round_trip PASSED
+tests/test_units.py::test_same_dimension_conversions PASSED
+tests/test_units.py::test_mass_to_volume_refused_without_rule PASSED
+tests/test_units.py::test_mass_volume_with_density_rule_both_directions PASSED
+tests/test_units.py::test_count_to_mass_rule PASSED
+tests/test_units.py::test_rejects_float_and_unknown_unit PASSED
+tests/test_units.py::test_rule_must_cross_dimensions PASSED
+============================= 61 passed in 16.04s ==============================
+
+## Frontend unit tests (vitest)
+ ✓ src/lib/format.test.ts (4 tests) 18ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+
+## Frontend type check
+tsc: no errors
+
+## End-to-end UI (Playwright, Chromium; desktop 1440px, iPhone 13, iPad)
+  ✓ 1. login + dashboard
+  ✓ 2. ingredient list, FIFO batches, price history
+  ✓ 3. recipe costing, cost history, editor
+  ✓ 4. record purchase via UI (confirm → detail, success toast only after server response)
+  ✓ 5. partial payment via UI → invoice shows partially paid
+  ✓ 6. supplier profile + statement
+  ✓ 7. record usage via UI → FIFO allocation shown
+  ✓ 8. production preview, stock count, movement history
+  ✓ 9. reports + integrity checks pass after UI transactions
+  ✓ 10. phone layout (horizontal overflow: 0px)
+  ✓ 11. tablet layout
+  ✓ 12. server unreachable → red indicator, draft restored from IndexedDB
+All 12 UI checks passed.

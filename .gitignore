@@ -9,3 +9,7 @@ backups/
 *.dump
 *.enc
 frontend/test-results/
+secrets/*
+!secrets/.gitkeep
+.env
+frontend/*.tsbuildinfo

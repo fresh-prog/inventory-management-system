@@ -14,7 +14,7 @@ from ..models import (
 )
 from ..security import Principal
 from .common import ZERO, money, now, qty, unit_cost
-from .ingredients import get_ingredient, stock_item_for, to_base_qty
+from .ingredients import base_unit, get_ingredient, stock_item_for, to_base_qty
 from .inventory import consume, lock_items, on_hand, receive
 from .platform import audit, emit
 
@@ -68,7 +68,7 @@ def record_adjustment(db: Session, p: Principal, data: dict) -> dict:
 
 
 def _movement_out(ing: Ingredient, mv) -> dict:
-    return {"movement_id": mv.id, "ingredient_id": ing.id, "ingredient_name": ing.name,
+    return {"movement_id": mv.id, "ingredient_id": ing.id, "ingredient_name": ing.name, "base_unit": base_unit(ing),
             "quantity_base": -Decimal(mv.quantity), "total_cost": -Decimal(mv.total_cost),
             "shortfall_quantity": mv.shortfall_quantity,
             "allocations": [{"batch_id": a.batch_id, "quantity": a.quantity, "unit_cost": a.unit_cost,

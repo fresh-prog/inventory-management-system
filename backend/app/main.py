@@ -60,14 +60,14 @@ def create_app() -> FastAPI:
 
     app.include_router(api)
 
-    dist = s.frontend_dist and Path(s.frontend_dist)
+    dist = s.frontend_dist and Path(s.frontend_dist).resolve()
     if dist and dist.exists():
         app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
 
         @app.get("/{path:path}", include_in_schema=False)
         def spa(path: str):
-            f = dist / path
-            if path and f.is_file() and dist in f.resolve().parents:
+            f = (dist / path).resolve()
+            if path and f.is_file() and dist in f.parents:  # no path traversal outside dist
                 return FileResponse(f)
             return FileResponse(dist / "index.html", headers={"Cache-Control": "no-cache"})
 
