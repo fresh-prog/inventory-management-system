@@ -1,0 +1,15 @@
+# Public HTTPS with an automatic certificate for CLOUD_DOMAIN (e.g. cloud.example.com).
+{$CLOUD_DOMAIN} {
+	encode gzip
+	request_body {
+		max_size 12MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy same-origin
+		Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src 'self'; manifest-src 'self'; worker-src 'self'"
+	}
+	reverse_proxy cloud:8000
+}

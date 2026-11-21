@@ -12,4 +12,6 @@ from .inventory import (
     ProductionRun, StockAllocation, StockBatch, StockCount, StockCountLine, StockItem, StockMovement,
 )
 
+from .sync import InboxEvent, PurchaseAttachment, StoredFile, SyncState
+
 __all__ = [n for n in dir() if n[0].isupper()]

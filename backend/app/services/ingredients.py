@@ -89,7 +89,9 @@ def _set_min_stock(db: Session, ing: Ingredient, branch_id: uuid.UUID, min_qty: 
 
 
 def _set_suppliers(db: Session, ing: Ingredient, suppliers: list[dict]) -> None:
-    db.query(SupplierIngredient).filter(SupplierIngredient.ingredient_id == ing.id).delete()
+    for old in db.scalars(select(SupplierIngredient).where(SupplierIngredient.ingredient_id == ing.id)).all():
+        db.delete(old)  # ORM deletes, so change capture sees them (no bulk Core deletes)
+    db.flush()
     for s in suppliers:
         if not db.get(Supplier, s["supplier_id"]):
             raise BusinessRuleError("Unknown supplier in supplier list")

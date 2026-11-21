@@ -10,5 +10,6 @@
 | [0006](0006-two-cost-bases.md) | Separate current-cost (pricing) and FIFO (actual) cost bases | Proposed |
 | [0007](0007-ocr-drafts-only.md) | Pluggable OCR that only ever produces reviewable drafts | Proposed |
 | [0008](0008-security-model.md) | Authentication, authorisation and branch isolation | Proposed |
+| [0009](0009-change-capture-sync.md) | Change-capture outbox, per-branch replica schemas, command-based remote management | Accepted |
 
 "Proposed" becomes "Accepted" once the owner approves Stage 1.

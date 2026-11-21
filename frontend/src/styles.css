@@ -74,6 +74,9 @@ h3 { font-size: .95rem; margin: 0 0 .5rem; }
 .sync.ok .dot { background: var(--good); }
 .sync.bad { border-color: var(--bad); color: var(--bad); background: var(--bad-bg); }
 .sync.bad .dot { background: var(--bad); }
+.sync.warn { border-color: var(--warn); color: var(--warn); background: var(--warn-bg); }
+.sync.warn .dot { background: var(--warn); }
+a.sync:hover { text-decoration: none; filter: brightness(.97); }
 
 /* ── cards / grid ── */
 .grid { display: grid; gap: 16px; }

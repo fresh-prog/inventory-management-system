@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..jsonenc import enc
-from ..models import AuditLog, OutboxEvent, PurchaseInvoice, Supplier, User
+from ..models import AuditLog, PurchaseInvoice, Supplier, User
 from ..security import Principal, require
 from ..services import reports as svc
 from ..services.common import money, now
@@ -82,17 +82,3 @@ def audit_log(entity: str | None = None, limit: int = Query(100, le=500), offset
     rows = db.execute(q.order_by(AuditLog.at.desc()).limit(limit).offset(offset)).all()
     return enc([{"id": a.id, "at": a.at, "user": u, "action": a.action, "entity": a.entity,
                  "entity_id": a.entity_id, "detail": a.detail} for a, u in rows])
-
-
-@router.get("/sync/status")
-def sync_status(p: Principal = Depends(require("report.read")), db: Session = Depends(get_db)):
-    from ..config import get_settings
-    pending = db.scalar(select(func.count()).select_from(OutboxEvent).where(
-        OutboxEvent.branch_id == p.branch.id, OutboxEvent.acked_at.is_(None)))
-    oldest = db.scalar(select(func.min(OutboxEvent.created_at)).where(
-        OutboxEvent.branch_id == p.branch.id, OutboxEvent.acked_at.is_(None)))
-    s = get_settings()
-    return enc({"mode": "local_branch", "cloud_configured": bool(s.cloud_sync_url),
-                "pending_events": pending, "oldest_pending_at": oldest,
-                "note": "Cloud synchronisation is not enabled in this release. Events are stored durably "
-                        "in the outbox and will be sent once sync is enabled."})

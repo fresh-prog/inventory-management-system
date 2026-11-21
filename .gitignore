@@ -11,5 +11,6 @@ backups/
 frontend/test-results/
 secrets/*
 !secrets/.gitkeep
-.env
+.env.cloud
+data/
 frontend/*.tsbuildinfo

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button, Card, Empty, ErrorBox, Field, Loading, Modal, Page, Tabs, useToast } from "../components/ui";
 import { get, patch, post } from "../lib/api";
 import { useAuth } from "../lib/auth";
@@ -13,16 +14,121 @@ const ROLES: Record<string, string> = {
 
 export default function Settings() {
   const { me, can } = useAuth();
-  const [tab, setTab] = useState(can("user.manage") ? "users" : "system");
+  const [params, setParams] = useSearchParams();
+  const tab = params.get("tab") || (can("user.manage") ? "users" : "sync");
+  const setTab = (t: string) => setParams({ tab: t });
   return (
     <Page title="Settings" subtitle={`${me?.branch.name} (${me?.branch.code}) · ${me?.branch.currency}`}>
       <Tabs value={tab} onChange={setTab} tabs={[...(can("user.manage") ? [{ id: "users", label: "Users & roles" }] : []),
-        ...(can("settings.manage") ? [{ id: "branch", label: "Costing settings" }, { id: "audit", label: "Audit log" }] : []), { id: "system", label: "System status" }]} />
+        { id: "sync", label: "Cloud sync" },
+        ...(can("settings.manage") ? [{ id: "devices", label: "Devices" }, { id: "branch", label: "Costing settings" }, { id: "audit", label: "Audit log" }] : []),
+        { id: "system", label: "System status" }]} />
       {tab === "users" && <Users />}
+      {tab === "sync" && <SyncPanel />}
+      {tab === "devices" && <Devices />}
       {tab === "branch" && <Branch />}
       {tab === "audit" && <Audit />}
       {tab === "system" && <System />}
     </Page>
+  );
+}
+
+const SYNC_STATE: Record<string, [string, string]> = {
+  in_sync: ["good", "In sync"], syncing: ["info", "Sending changes"], offline: ["warn", "Cloud unreachable — retrying"],
+  blocked: ["bad", "Blocked by a rejected change"], halted: ["bad", "Halted — needs an operator"], not_registered: ["neutral", "Not set up"],
+};
+
+function SyncPanel() {
+  const { can } = useAuth();
+  const qc = useQueryClient();
+  const toast = useToast();
+  const st = useQuery({ queryKey: ["sync-status"], queryFn: () => get("/sync/status"), refetchInterval: 10000 });
+  const unsent = useQuery({ queryKey: ["sync-queue", "unsent"], queryFn: () => get<any[]>("/sync/queue?state=unsent"), enabled: can("settings.manage") });
+  const cmds = useQuery({ queryKey: ["sync-commands"], queryFn: () => get<any[]>("/sync/commands"), enabled: can("settings.manage") });
+  const [reg, setReg] = useState({ cloud_url: "https://", registration_code: "" });
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["sync-status"] }); qc.invalidateQueries({ queryKey: ["sync-queue"] }); qc.invalidateQueries({ queryKey: ["health"] }); qc.invalidateQueries({ queryKey: ["sync-commands"] }); };
+  const register = useMutation({ mutationFn: () => post("/sync/register", reg), onSuccess: () => { refresh(); toast("good", "Registered with the cloud. The first full copy will be sent now."); } });
+  const run = useMutation({ mutationFn: () => post("/sync/run"), onSuccess: (r: any) => {
+    refresh(); qc.invalidateQueries();
+    toast(r.result.state === "ok" ? "good" : "bad", r.result.state === "ok" ? `Sync complete — ${r.result.push?.acked ?? 0} change(s) acknowledged` : `Sync failed: ${r.result.error || r.result.reason || r.result.state}`);
+  } });
+  const retry = useMutation({ mutationFn: () => post("/sync/retry-failed"), onSuccess: () => { refresh(); toast("info", "Rejected changes queued for another attempt"); } });
+  const snap = useMutation({ mutationFn: () => post("/sync/resnapshot"), onSuccess: () => { refresh(); toast("info", "A full copy will be sent on the next sync"); } });
+  if (st.isLoading) return <Loading />;
+  if (st.error) return <ErrorBox error={st.error} />;
+  const s = st.data;
+  const [tone, label] = SYNC_STATE[s.state] || ["neutral", s.state];
+  const q = s.queue;
+  return (
+    <div className="stack">
+      <ErrorBox error={register.error || run.error || retry.error || snap.error} />
+      <div className="grid cols-4">
+        <div className="stat card"><div className="stat-label">Cloud sync</div><div className="stat-value" style={{ fontSize: "1.1rem" }}><span className={`badge ${tone}`}>{label}</span></div>
+          <div className="stat-hint">Last success: {dateTime(s.last_success_at)}</div></div>
+        <div className="stat card"><div className="stat-label">Waiting to send</div><div className={`stat-value ${q.pending + q.retry ? "warn" : "good"}`}>{q.pending + q.retry}</div>
+          <div className="stat-hint">{q.oldest_unsent_at ? `oldest from ${dateTime(q.oldest_unsent_at)}` : "nothing waiting"}</div></div>
+        <div className="stat card"><div className="stat-label">Rejected (needs action)</div><div className={`stat-value ${q.failed ? "bad" : "good"}`}>{q.failed}</div>
+          <div className="stat-hint">{q.acked} acknowledged by the cloud</div></div>
+        <div className="stat card"><div className="stat-label">Receipts not yet in cloud</div><div className={`stat-value ${q.files_pending ? "warn" : "good"}`}>{q.files_pending}</div>
+          <div className="stat-hint">Stored safely on this server</div></div>
+      </div>
+      {s.halted_reason && <div className="alert bad"><strong>Synchronisation halted.</strong> {s.halted_reason} Follow the recovery runbook (docs/SYNC-RUNBOOK.md); nothing has been deleted.</div>}
+      {s.last_error && !s.halted_reason && <div className="alert warn">Last attempt: {s.last_error}. The restaurant keeps working; changes are kept and retried automatically with back-off.</div>}
+      {!s.registered ? (
+        can("settings.manage") && <Card title="Connect this restaurant to the cloud">
+          <p className="muted small" style={{ marginTop: 0 }}>Optional. The restaurant works fully without it. Connecting adds an off-site copy, remote reports for the owner and remote management. Ask your administrator for the cloud address and a one-time registration code.</p>
+          <form onSubmit={(e) => { e.preventDefault(); register.mutate(); }}>
+            <div className="form-grid">
+              <Field label="Cloud address">{(i) => <input id={i} type="url" required value={reg.cloud_url} onChange={(e) => setReg({ ...reg, cloud_url: e.target.value })} />}</Field>
+              <Field label="Registration code">{(i) => <input id={i} required value={reg.registration_code} placeholder="ABCD-1234-…" onChange={(e) => setReg({ ...reg, registration_code: e.target.value })} />}</Field>
+            </div>
+            <div className="form-actions"><Button type="submit" busy={register.isPending}>Connect</Button></div>
+          </form>
+        </Card>
+      ) : (
+        <Card title="Connection" actions={can("settings.manage") && <>
+          {q.failed > 0 && <Button variant="secondary" className="sm" busy={retry.isPending} onClick={() => retry.mutate()}>Retry rejected</Button>}
+          <Button variant="secondary" className="sm" busy={snap.isPending} onClick={() => snap.mutate()}>Send full copy</Button>
+          <Button className="sm" busy={run.isPending} onClick={() => run.mutate()}>Sync now</Button></>}>
+          <dl className="kv"><dt>Cloud</dt><dd className="mono">{s.cloud_url}</dd><dt>Registered</dt><dd>{dateTime(s.registered_at)}</dd>
+            <dt>Last attempt</dt><dd>{dateTime(s.last_attempt_at)}</dd><dt>Cloud has up to change #</dt><dd>{s.cloud_high_water ?? "—"}</dd></dl>
+          <p className="muted small">Changes are sent in the order they happened and are only marked as synced when the cloud returns a signed acknowledgement. Nothing is deleted before that.</p>
+        </Card>)}
+      {can("settings.manage") && s.registered && (
+        <div className="grid cols-2">
+          <Card title="Not yet in the cloud" pad={false}>
+            {!unsent.data?.length ? <Empty title="Nothing waiting" /> : (
+              <div className="table-wrap"><table><thead><tr><th>#</th><th>Change</th><th>Status</th><th className="hide-sm">Detail</th></tr></thead>
+                <tbody>{unsent.data.map((e) => (<tr key={e.id}><td className="mono">{e.sequence}</td><td>{e.topic}<div className="muted small">{dateTime(e.created_at)} · {e.rows} rows</div></td>
+                  <td><span className={`badge ${e.status === "failed" ? "bad" : e.status === "retry" ? "warn" : "info"}`}>{e.status}</span>{e.attempts > 0 && <div className="muted small">{e.attempts} attempt(s)</div>}</td>
+                  <td className="hide-sm small">{e.last_error}{e.next_attempt_at && <div className="muted">next try {dateTime(e.next_attempt_at)}</div>}</td></tr>))}</tbody></table></div>)}
+          </Card>
+          <Card title="Remote changes from the cloud" pad={false}>
+            {!cmds.data?.length ? <Empty title="No remote changes received" /> : (
+              <ul className="list-plain">{cmds.data.map((c) => (<li key={c.id}><span>{c.type}<div className="muted small">{dateTime(c.received_at)}{c.result?.by ? ` · by ${c.result.by}` : ""}{c.result?.error ? ` · ${c.result.error}` : ""}</div></span>
+                <span className={`badge ${c.status === "applied" ? "good" : c.status === "conflict" ? "warn" : "bad"}`}>{c.status}</span></li>))}</ul>)}
+          </Card>
+        </div>)}
+    </div>
+  );
+}
+
+function Devices() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const q = useQuery({ queryKey: ["devices"], queryFn: () => get<any[]>("/devices") });
+  const revoke = useMutation({ mutationFn: (id: string) => post(`/devices/${id}/revoke`), onSuccess: () => { qc.invalidateQueries({ queryKey: ["devices"] }); toast("good", "Device revoked — it can no longer make changes"); } });
+  return (
+    <Card pad={false} title="Registered devices">
+      <p className="muted small card-body" style={{ margin: 0 }}>Every change records the device it came from. Revoke a lost or stolen phone or tablet to block it immediately.</p>
+      <ErrorBox error={revoke.error} />
+      {q.isLoading ? <Loading /> : (
+        <div className="table-wrap"><table><thead><tr><th>Device</th><th className="hide-sm">Registered by</th><th>Since</th><th>Status</th><th /></tr></thead>
+          <tbody>{q.data!.map((d) => (<tr key={d.id}><td>{d.name}{d.is_current && <span className="badge info" style={{ marginLeft: 6 }}>this device</span>}<div className="muted small mono">{d.id.slice(0, 8)}</div></td>
+            <td className="hide-sm">{d.registered_by || "—"}</td><td className="small">{dateTime(d.created_at)}</td>
+            <td>{d.revoked_at ? <span className="badge bad">revoked</span> : <span className="badge good">active</span>}</td>
+            <td>{!d.revoked_at && !d.is_current && <Button variant="ghost" className="sm" onClick={() => revoke.mutate(d.id)}>Revoke</Button>}</td></tr>))}</tbody></table></div>)}
+    </Card>
   );
 }
 
@@ -113,9 +219,10 @@ function System() {
       </Card>
       <Card title="Cloud synchronisation">
         {sync.data ? (<>
-          <dl className="kv"><dt>Status</dt><dd><span className="badge warn">not enabled in this release</span></dd>
-            <dt>Changes stored for sync</dt><dd>{sync.data.pending_events}</dd><dt>Oldest waiting</dt><dd>{dateTime(sync.data.oldest_pending_at)}</dd></dl>
-          <p className="muted small">{sync.data.note}</p></>) : <ErrorBox error={sync.error} />}
+          <dl className="kv"><dt>Status</dt><dd>{(SYNC_STATE[sync.data.state] || [, sync.data.state])[1]}</dd>
+            <dt>Changes waiting</dt><dd>{sync.data.pending_events}</dd><dt>Oldest waiting</dt><dd>{dateTime(sync.data.queue.oldest_unsent_at)}</dd>
+            <dt>Last cloud success</dt><dd>{dateTime(sync.data.last_success_at)}</dd></dl>
+          <p className="muted small">The restaurant never depends on the cloud for daily work.</p></>) : <ErrorBox error={sync.error} />}
       </Card>
     </div>
   );

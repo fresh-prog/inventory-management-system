@@ -126,6 +126,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -168,6 +184,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -201,6 +233,22 @@
     "operationId": "update_branch_api_v1_settings_branch_patch",
     "parameters": [
      {
+      "name": "if-match",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "If-Match"
+      }
+     },
+     {
       "name": "authorization",
       "in": "header",
       "required": false,
@@ -214,6 +262,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -272,6 +336,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -316,6 +396,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -383,6 +479,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "requestBody": {
@@ -395,6 +507,214 @@
       }
      }
     },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/devices": {
+   "post": {
+    "tags": [
+     "devices"
+    ],
+    "summary": "Register",
+    "description": "Register this phone/tablet/PC. The returned id is sent as X-Device-Id on every request.",
+    "operationId": "register_api_v1_devices_post",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DeviceIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "get": {
+    "tags": [
+     "devices"
+    ],
+    "summary": "List Devices",
+    "operationId": "list_devices_api_v1_devices_get",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/devices/{device_id}/revoke": {
+   "post": {
+    "tags": [
+     "devices"
+    ],
+    "summary": "Revoke",
+    "operationId": "revoke_api_v1_devices__device_id__revoke_post",
+    "parameters": [
+     {
+      "name": "device_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Device Id"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
+     }
+    ],
     "responses": {
      "200": {
       "description": "Successful Response",
@@ -459,6 +779,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -560,6 +896,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -604,6 +956,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -671,6 +1039,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -743,6 +1127,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "requestBody": {
@@ -810,6 +1210,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -868,6 +1284,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "requestBody": {
@@ -925,6 +1357,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -969,6 +1417,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -1027,6 +1491,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -1095,6 +1575,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -1151,6 +1647,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -1228,6 +1740,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -1294,6 +1822,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -1351,6 +1895,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -1407,6 +1967,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -1471,6 +2047,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -1515,6 +2107,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -1599,6 +2207,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "requestBody": {
@@ -1663,6 +2287,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -1815,6 +2455,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -1877,6 +2533,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "requestBody": {
@@ -1934,6 +2606,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -2001,6 +2689,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -2075,6 +2779,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "requestBody": {
@@ -2147,6 +2867,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -2231,6 +2967,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "requestBody": {
@@ -2304,6 +3056,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "requestBody": {
@@ -2318,6 +3086,233 @@
     },
     "responses": {
      "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/purchases/{purchase_id}/attachments": {
+   "post": {
+    "tags": [
+     "documents"
+    ],
+    "summary": "Upload",
+    "operationId": "upload_api_v1_purchases__purchase_id__attachments_post",
+    "parameters": [
+     {
+      "name": "purchase_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Purchase Id"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_upload_api_v1_purchases__purchase_id__attachments_post"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "get": {
+    "tags": [
+     "documents"
+    ],
+    "summary": "List Attachments",
+    "operationId": "list_attachments_api_v1_purchases__purchase_id__attachments_get",
+    "parameters": [
+     {
+      "name": "purchase_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Purchase Id"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/files/{file_id}": {
+   "get": {
+    "tags": [
+     "documents"
+    ],
+    "summary": "Download",
+    "operationId": "download_api_v1_files__file_id__get",
+    "parameters": [
+     {
+      "name": "file_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "File Id"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
       "description": "Successful Response",
       "content": {
        "application/json": {
@@ -2370,6 +3365,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -2437,6 +3448,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -2573,6 +3600,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -2635,6 +3678,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -2708,6 +3767,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -2809,6 +3884,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -2872,6 +3963,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "requestBody": {
@@ -2929,6 +4036,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -2973,6 +4096,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -3041,6 +4180,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -3097,6 +4252,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -3181,6 +4352,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -3228,6 +4415,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -3274,6 +4477,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -3356,6 +4575,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -3437,6 +4672,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -3483,6 +4734,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -3542,6 +4809,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -3589,6 +4872,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -3674,6 +4973,22 @@
        ],
        "title": "Authorization"
       }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
      }
     ],
     "responses": {
@@ -3701,10 +5016,10 @@
   "/api/v1/sync/status": {
    "get": {
     "tags": [
-     "dashboard & reports"
+     "synchronisation (branch)"
     ],
-    "summary": "Sync Status",
-    "operationId": "sync_status_api_v1_sync_status_get",
+    "summary": "Status",
+    "operationId": "status_api_v1_sync_status_get",
     "parameters": [
      {
       "name": "authorization",
@@ -3720,6 +5035,22 @@
         }
        ],
        "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
       }
      }
     ],
@@ -3739,6 +5070,424 @@
         "schema": {
          "$ref": "#/components/schemas/HTTPValidationError"
         }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/sync/queue": {
+   "get": {
+    "tags": [
+     "synchronisation (branch)"
+    ],
+    "summary": "Queue",
+    "operationId": "queue_api_v1_sync_queue_get",
+    "parameters": [
+     {
+      "name": "state",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "unsent",
+       "title": "State"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/sync/commands": {
+   "get": {
+    "tags": [
+     "synchronisation (branch)"
+    ],
+    "summary": "Commands",
+    "operationId": "commands_api_v1_sync_commands_get",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/sync/register": {
+   "post": {
+    "tags": [
+     "synchronisation (branch)"
+    ],
+    "summary": "Register",
+    "operationId": "register_api_v1_sync_register_post",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RegisterIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/sync/run": {
+   "post": {
+    "tags": [
+     "synchronisation (branch)"
+    ],
+    "summary": "Run Now",
+    "operationId": "run_now_api_v1_sync_run_post",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/sync/retry-failed": {
+   "post": {
+    "tags": [
+     "synchronisation (branch)"
+    ],
+    "summary": "Retry Failed",
+    "operationId": "retry_failed_api_v1_sync_retry_failed_post",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/sync/resnapshot": {
+   "post": {
+    "tags": [
+     "synchronisation (branch)"
+    ],
+    "summary": "Resnapshot",
+    "description": "Re-send the full current state (e.g. after a cloud restore beyond the retention window).",
+    "operationId": "resnapshot_api_v1_sync_resnapshot_post",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "x-device-id",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Device-Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/profile": {
+   "get": {
+    "tags": [
+     "ops"
+    ],
+    "summary": "Get Profile",
+    "operationId": "get_profile_api_v1_profile_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
        }
       }
      }
@@ -3878,6 +5627,20 @@
      "amount"
     ],
     "title": "AllocationIn"
+   },
+   "Body_upload_api_v1_purchases__purchase_id__attachments_post": {
+    "properties": {
+     "file": {
+      "type": "string",
+      "format": "binary",
+      "title": "File"
+     }
+    },
+    "type": "object",
+    "required": [
+     "file"
+    ],
+    "title": "Body_upload_api_v1_purchases__purchase_id__attachments_post"
    },
    "BranchSettingsIn": {
     "properties": {
@@ -4188,6 +5951,33 @@
      "reason"
     ],
     "title": "CreditIn"
+   },
+   "DeviceIn": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Name"
+     },
+     "user_agent": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 300
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "User Agent"
+     }
+    },
+    "type": "object",
+    "required": [
+     "name"
+    ],
+    "title": "DeviceIn"
    },
    "HTTPValidationError": {
     "properties": {
@@ -5493,6 +7283,29 @@
      "lines"
     ],
     "title": "RecipeVersionIn"
+   },
+   "RegisterIn": {
+    "properties": {
+     "cloud_url": {
+      "type": "string",
+      "maxLength": 300,
+      "minLength": 8,
+      "pattern": "^https?://",
+      "title": "Cloud Url"
+     },
+     "registration_code": {
+      "type": "string",
+      "maxLength": 40,
+      "minLength": 4,
+      "title": "Registration Code"
+     }
+    },
+    "type": "object",
+    "required": [
+     "cloud_url",
+     "registration_code"
+    ],
+    "title": "RegisterIn"
    },
    "SetupIn": {
     "properties": {

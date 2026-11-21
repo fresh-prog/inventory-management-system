@@ -8,11 +8,12 @@ RUN npm run build
 
 # ── API + static files ──
 FROM python:3.12-slim
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 APP_FRONTEND_DIST=/app/web
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 APP_FRONTEND_DIST=/app/web APP_FILES_DIR=/data/files
 RUN apt-get update \
     && apt-get install -y --no-install-recommends openssl \
     && apt-get clean \
-    && useradd --create-home --uid 10001 app
+    && useradd --create-home --uid 10001 app \
+    && mkdir -p /data/files && chown app /data/files
 WORKDIR /app
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt

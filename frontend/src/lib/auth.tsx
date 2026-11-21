@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { NetworkError, get, post, setUnauthorizedHandler, token } from "./api";
+import { NetworkError, device, deviceName, get, post, setDeviceProblemHandler, setUnauthorizedHandler, token } from "./api";
 import { configureMoney } from "./format";
 
 export type Me = {
@@ -31,6 +31,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token.get()) { setMe(null); setLoading(false); return; }
     try {
       const m = await get<Me>("/me");
+      if (!device.get()) {  // every write must come from a registered device
+        const d = await post<{ id: string }>("/devices", { name: deviceName(), user_agent: navigator.userAgent.slice(0, 300) });
+        device.set(d.id);
+      }
       configureMoney(m.branch.currency, m.branch.currency_decimals);
       cache.set(m);
       setMe(m);
@@ -49,7 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => { token.set(null); cache.set(null); setMe(null); qc.clear(); }, [qc]);
 
-  useEffect(() => { setUnauthorizedHandler(logout); reload(); }, [reload, logout]);
+  useEffect(() => {
+    setUnauthorizedHandler(logout);
+    setDeviceProblemHandler((msg) => { alert(msg + " You will be signed out."); logout(); });
+    reload();
+  }, [reload, logout]);
 
   const login = async (email: string, password: string) => {
     const r = await post<{ access_token: string }>("/auth/login", { email, password });

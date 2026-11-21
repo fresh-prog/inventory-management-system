@@ -2,6 +2,7 @@ from collections.abc import Iterator
 from datetime import datetime
 from decimal import Decimal
 
+from fastapi import Request
 from sqlalchemy import DateTime, MetaData, Numeric, create_engine, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
@@ -31,32 +32,28 @@ def created_at_col() -> Mapped[datetime]:
     return mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+def make_engine(url: str):
+    return create_engine(url, pool_size=10, max_overflow=20, pool_pre_ping=True, pool_recycle=1800)
+
+
 _engine = None
-_SessionLocal: sessionmaker[Session] | None = None
 
 
 def get_engine():
-    global _engine, _SessionLocal
+    """Default engine from settings (used by scripts/tests; apps hold their own)."""
+    global _engine
     if _engine is None:
-        _engine = create_engine(
-            get_settings().database_url,
-            pool_size=10,
-            max_overflow=20,
-            pool_pre_ping=True,
-            pool_recycle=1800,
-        )
-        _SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
+        _engine = make_engine(get_settings().database_url)
     return _engine
 
 
-def SessionLocal() -> Session:
-    get_engine()
-    assert _SessionLocal is not None
-    return _SessionLocal()
+def make_sessionmaker(engine, capture: bool) -> sessionmaker[Session]:
+    """capture=True turns on change capture into the sync outbox (branch profile)."""
+    return sessionmaker(bind=engine, expire_on_commit=False, info={"capture": capture})
 
 
-def get_db() -> Iterator[Session]:
-    db = SessionLocal()
+def get_db(request: Request) -> Iterator[Session]:
+    db = request.app.state.Session()
     try:
         yield db
     finally:

@@ -14,14 +14,23 @@ class Settings(BaseSettings):
     login_lock_minutes: int = 15
     frontend_dist: str | None = None  # serve the built SPA from here when set
     cors_origins: list[str] = ["http://localhost:5173"]
-    deployment_profile: str = "branch"  # branch | cloud (cloud sync arrives in a later stage)
-    cloud_sync_url: str | None = None
+    deployment_profile: str = "branch"  # branch | cloud
+    files_dir: str = "./data/files"  # local document storage (receipts)
+    max_upload_mb: int = 10
+    # cloud profile only: master key deriving per-branch sync secrets (keep secret, 32+ chars)
+    cloud_master_key: str = "dev-only-cloud-master-key-change-me"
+    sync_batch_size: int = 100
+    sync_max_backoff_seconds: int = 900
+    outbox_retention_days: int = 90
 
     def validate_for_production(self) -> None:
-        if self.env == "production" and (
-            self.jwt_secret == "dev-only-change-me" or len(self.jwt_secret) < 32
-        ):
+        if self.env != "production":
+            return
+        if self.jwt_secret == "dev-only-change-me" or len(self.jwt_secret) < 32:
             raise RuntimeError("APP_JWT_SECRET must be set to a random value of 32+ characters")
+        if self.deployment_profile == "cloud" and (
+                self.cloud_master_key.startswith("dev-only") or len(self.cloud_master_key) < 32):
+            raise RuntimeError("APP_CLOUD_MASTER_KEY must be set to a random value of 32+ characters")
 
 
 @lru_cache

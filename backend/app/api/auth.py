@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -95,12 +95,15 @@ def me(p: Principal = Depends(get_principal)):
 
 
 @router.patch("/settings/branch")
-def update_branch(body: BranchSettingsIn, p: Principal = Depends(require("settings.manage")),
-                  db: Session = Depends(get_db)):
-    b = p.branch
+def update_branch(body: BranchSettingsIn, if_match: int | None = Header(default=None),
+                  p: Principal = Depends(require("settings.manage")), db: Session = Depends(get_db)):
+    b = db.get(Branch, p.branch.id, with_for_update=True)
+    if if_match is not None and if_match != b.settings_version:
+        raise Conflict("Settings were changed by someone else. Reload and try again.")
     before = {"target": b.default_target_food_cost_rate, "tax": b.include_tax_in_cost, "name": b.name}
     for k, v in body.model_dump(exclude_none=True).items():
         setattr(b, k, v)
+    b.settings_version += 1  # remote (cloud) edits based on an older version become conflicts
     audit(db, p, "settings.update", "branch", b.id, {"before": before, "after": body.model_dump(exclude_none=True)})
     db.commit()
     return {"ok": True}

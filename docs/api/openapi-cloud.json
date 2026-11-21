@@ -1,0 +1,1269 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "Restaurant Costing, Purchasing & FIFO Inventory API",
+  "version": "0.2.0"
+ },
+ "paths": {
+  "/api/v1/cloud/auth/login": {
+   "post": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "Login",
+    "operationId": "login_api_v1_cloud_auth_login_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/LoginIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud/auth/mfa/enroll": {
+   "post": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "Enroll",
+    "operationId": "enroll_api_v1_cloud_auth_mfa_enroll_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_enroll_api_v1_cloud_auth_mfa_enroll_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud/me": {
+   "get": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "Me",
+    "operationId": "me_api_v1_cloud_me_get",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud/branches": {
+   "get": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "Branches",
+    "operationId": "branches_api_v1_cloud_branches_get",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "Create Branch",
+    "operationId": "create_branch_api_v1_cloud_branches_post",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BranchIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud/branches/{branch_id}/registration-code": {
+   "post": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "Registration Code",
+    "operationId": "registration_code_api_v1_cloud_branches__branch_id__registration_code_post",
+    "parameters": [
+     {
+      "name": "branch_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Branch Id"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud/branches/{branch_id}/resume": {
+   "post": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "Resume",
+    "description": "Clear a halt after an operator has reconciled the branch (see the recovery runbook).",
+    "operationId": "resume_api_v1_cloud_branches__branch_id__resume_post",
+    "parameters": [
+     {
+      "name": "branch_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Branch Id"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud/branches/{branch_id}": {
+   "get": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "Branch Detail",
+    "operationId": "branch_detail_api_v1_cloud_branches__branch_id__get",
+    "parameters": [
+     {
+      "name": "branch_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Branch Id"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud/branches/{branch_id}/dashboard": {
+   "get": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "Branch Dashboard",
+    "description": "The branch's own dashboard, computed from the replica. Labelled with how fresh it is.",
+    "operationId": "branch_dashboard_api_v1_cloud_branches__branch_id__dashboard_get",
+    "parameters": [
+     {
+      "name": "branch_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Branch Id"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud/branches/{branch_id}/replica/{resource}": {
+   "get": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "Replica List",
+    "description": "Small read-only lists used by remote-management forms (ingredients, suppliers, recipes, invoices).",
+    "operationId": "replica_list_api_v1_cloud_branches__branch_id__replica__resource__get",
+    "parameters": [
+     {
+      "name": "branch_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Branch Id"
+      }
+     },
+     {
+      "name": "resource",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Resource"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud/summary": {
+   "get": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "Central Summary",
+    "description": "Central reporting across branches (per currency \u2014 no FX conversion).",
+    "operationId": "central_summary_api_v1_cloud_summary_get",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud/branches/{branch_id}/commands": {
+   "post": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "Create Command",
+    "operationId": "create_command_api_v1_cloud_branches__branch_id__commands_post",
+    "parameters": [
+     {
+      "name": "branch_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Branch Id"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CommandIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "get": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "List Commands",
+    "operationId": "list_commands_api_v1_cloud_branches__branch_id__commands_get",
+    "parameters": [
+     {
+      "name": "branch_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "Branch Id"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud/audit": {
+   "get": {
+    "tags": [
+     "cloud: remote management"
+    ],
+    "summary": "Cloud Audit",
+    "operationId": "cloud_audit_api_v1_cloud_audit_get",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud-sync/register": {
+   "post": {
+    "tags": [
+     "cloud: branch sync (machine)"
+    ],
+    "summary": "Register",
+    "operationId": "register_api_v1_cloud_sync_register_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RegisterIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud-sync/events": {
+   "post": {
+    "tags": [
+     "cloud: branch sync (machine)"
+    ],
+    "summary": "Push Events",
+    "operationId": "push_events_api_v1_cloud_sync_events_post",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     }
+    }
+   },
+   "get": {
+    "tags": [
+     "cloud: branch sync (machine)"
+    ],
+    "summary": "Export Events",
+    "description": "Recovery: the branch fetches the cloud's copy of its own events (restore-from-cloud).",
+    "operationId": "export_events_api_v1_cloud_sync_events_get",
+    "parameters": [
+     {
+      "name": "after",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "default": 0,
+       "title": "After"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 1000,
+       "default": 200,
+       "title": "Limit"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud-sync/commands": {
+   "get": {
+    "tags": [
+     "cloud: branch sync (machine)"
+    ],
+    "summary": "Pull Commands",
+    "operationId": "pull_commands_api_v1_cloud_sync_commands_get",
+    "parameters": [
+     {
+      "name": "after",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "default": 0,
+       "title": "After"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud-sync/files/{file_id}": {
+   "get": {
+    "tags": [
+     "cloud: branch sync (machine)"
+    ],
+    "summary": "File Status",
+    "operationId": "file_status_api_v1_cloud_sync_files__file_id__get",
+    "parameters": [
+     {
+      "name": "file_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "File Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "put": {
+    "tags": [
+     "cloud: branch sync (machine)"
+    ],
+    "summary": "Upload Chunk",
+    "operationId": "upload_chunk_api_v1_cloud_sync_files__file_id__put",
+    "parameters": [
+     {
+      "name": "file_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "File Id"
+      }
+     },
+     {
+      "name": "offset",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "title": "Offset"
+      }
+     },
+     {
+      "name": "sha256",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "minLength": 64,
+       "maxLength": 64,
+       "title": "Sha256"
+      }
+     },
+     {
+      "name": "size",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "exclusiveMinimum": 0,
+       "title": "Size"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/cloud-sync/files/{file_id}/complete": {
+   "post": {
+    "tags": [
+     "cloud: branch sync (machine)"
+    ],
+    "summary": "Complete",
+    "operationId": "complete_api_v1_cloud_sync_files__file_id__complete_post",
+    "parameters": [
+     {
+      "name": "file_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid",
+       "title": "File Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/profile": {
+   "get": {
+    "tags": [
+     "ops"
+    ],
+    "summary": "Get Profile",
+    "operationId": "get_profile_api_v1_profile_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/health/live": {
+   "get": {
+    "tags": [
+     "ops"
+    ],
+    "summary": "Live",
+    "operationId": "live_api_v1_health_live_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/health/ready": {
+   "get": {
+    "tags": [
+     "ops"
+    ],
+    "summary": "Ready",
+    "operationId": "ready_api_v1_health_ready_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "Body_enroll_api_v1_cloud_auth_mfa_enroll_post": {
+    "properties": {
+     "enrollment_token": {
+      "type": "string",
+      "title": "Enrollment Token"
+     },
+     "code": {
+      "type": "string",
+      "title": "Code"
+     }
+    },
+    "type": "object",
+    "required": [
+     "enrollment_token",
+     "code"
+    ],
+    "title": "Body_enroll_api_v1_cloud_auth_mfa_enroll_post"
+   },
+   "BranchIn": {
+    "properties": {
+     "code": {
+      "type": "string",
+      "maxLength": 20,
+      "minLength": 2,
+      "pattern": "^[A-Za-z0-9_\\-]+$",
+      "title": "Code"
+     },
+     "name": {
+      "type": "string",
+      "maxLength": 120,
+      "minLength": 2,
+      "title": "Name"
+     }
+    },
+    "type": "object",
+    "required": [
+     "code",
+     "name"
+    ],
+    "title": "BranchIn"
+   },
+   "CommandIn": {
+    "properties": {
+     "type": {
+      "type": "string",
+      "title": "Type"
+     },
+     "payload": {
+      "additionalProperties": true,
+      "type": "object",
+      "title": "Payload"
+     }
+    },
+    "type": "object",
+    "required": [
+     "type",
+     "payload"
+    ],
+    "title": "CommandIn"
+   },
+   "HTTPValidationError": {
+    "properties": {
+     "detail": {
+      "items": {
+       "$ref": "#/components/schemas/ValidationError"
+      },
+      "type": "array",
+      "title": "Detail"
+     }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+   },
+   "LoginIn": {
+    "properties": {
+     "email": {
+      "type": "string",
+      "title": "Email"
+     },
+     "password": {
+      "type": "string",
+      "title": "Password"
+     },
+     "code": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Code"
+     }
+    },
+    "type": "object",
+    "required": [
+     "email",
+     "password"
+    ],
+    "title": "LoginIn"
+   },
+   "RegisterIn": {
+    "properties": {
+     "registration_code": {
+      "type": "string",
+      "title": "Registration Code"
+     },
+     "branch": {
+      "additionalProperties": true,
+      "type": "object",
+      "title": "Branch"
+     }
+    },
+    "type": "object",
+    "required": [
+     "registration_code",
+     "branch"
+    ],
+    "title": "RegisterIn"
+   },
+   "ValidationError": {
+    "properties": {
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "type": "array",
+      "title": "Location"
+     },
+     "msg": {
+      "type": "string",
+      "title": "Message"
+     },
+     "type": {
+      "type": "string",
+      "title": "Error Type"
+     }
+    },
+    "type": "object",
+    "required": [
+     "loc",
+     "msg",
+     "type"
+    ],
+    "title": "ValidationError"
+   }
+  }
+ }
+}

@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-export type Health = { status: string; database: string; disk: string; disk_free_percent: number;
-                       sync_pending_events: number; mode: string };
+export type Health = { status: string; database: string; disk: string; disk_free_percent: number; mode: string;
+  sync_pending_events: number; sync_failed_events: number; cloud_registered: boolean;
+  cloud_last_success_at: string | null; cloud_last_error: string | null; sync_halted: string | null };
 
 /** Connection to the LOCAL branch server (not the internet). The app works without internet. */
 export function useConnection() {

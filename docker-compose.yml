@@ -25,6 +25,20 @@ services:
     # the database password is read from a Docker secret, never stored in the image or .env
     command: ["sh", "-c", "export APP_DATABASE_URL=postgresql+psycopg://app:$$(cat /run/secrets/db_password)@db:5432/restaurant && alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers"]
     expose: ["8000"]
+    volumes: [files:/data/files]
+
+  # Background cloud synchronisation. Optional: the restaurant works without it. Safe to restart
+  # at any time; it resumes from the durable outbox.
+  sync:
+    build: .
+    restart: unless-stopped
+    depends_on: [app]
+    env_file: .env
+    environment:
+      APP_ENV: production
+    secrets: [db_password]
+    command: ["sh", "-c", "export APP_DATABASE_URL=postgresql+psycopg://app:$$(cat /run/secrets/db_password)@db:5432/restaurant && exec python -m app.sync.worker"]
+    volumes: [files:/data/files]
 
   caddy:
     image: caddy:2-alpine
@@ -43,3 +57,4 @@ secrets:
 volumes:
   dbdata:
   caddydata:
+  files:  # receipts and documents — back up together with the database

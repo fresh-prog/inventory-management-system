@@ -1,7 +1,6 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useConnection } from "../lib/connection";
-import { dateTime } from "../lib/format";
 
 const I = {
   dash: "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
@@ -23,22 +22,41 @@ export const NAV = [
   { to: "/reports", label: "Reports", short: "Reports", icon: I.rep, perm: "report.read" },
 ];
 
+function ago(iso: string | null | undefined): string {
+  if (!iso) return "never";
+  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
+}
+
 export function SyncIndicator() {
   const c = useConnection();
-  const pending = c.health?.sync_pending_events ?? 0;
+  const h = c.health;
   if (!c.serverReachable && !c.checking) {
     return (
-      <span className="sync bad" title="This device cannot reach the restaurant server. Entries are kept as drafts on this device and nothing is posted until the connection returns.">
+      <Link to="/settings?tab=sync" className="sync bad" title="This device cannot reach the restaurant server. Entries are kept as drafts on this device and nothing is posted until the connection returns.">
         <span className="dot" /> <span className="label">Server unreachable — drafts only</span>
-      </span>
+      </Link>
     );
   }
-  return (
-    <span className="sync ok" title={`Connected to the local branch server (works without internet). Last check: ${c.lastChecked ? dateTime(new Date(c.lastChecked).toISOString()) : "—"}.
-Cloud sync is not enabled in this release: ${pending} change(s) are stored durably on the branch server, waiting to sync.`}>
-      <span className="dot" /> <span className="label">Local server connected · {pending} awaiting cloud sync</span>
-    </span>
-  );
+  if (!h) return null;
+  const pending = h.sync_pending_events ?? 0;
+  let tone = "ok", label = "", title = "";
+  if (!h.cloud_registered) {
+    tone = "ok"; label = "Local server · cloud not set up";
+    title = "Everything is saved on the restaurant server. Cloud backup/sync has not been set up (Settings → Cloud sync).";
+  } else if (h.sync_halted || h.sync_failed_events) {
+    tone = "warn"; label = "Cloud sync needs attention";
+    title = h.sync_halted || "An event was rejected by the cloud. Open Settings → Cloud sync.";
+  } else if (pending > 0) {
+    tone = h.cloud_last_error ? "warn" : "ok";
+    label = `${pending} change${pending === 1 ? "" : "s"} not yet in the cloud`;
+    title = `Saved on the restaurant server. Last successful cloud sync: ${ago(h.cloud_last_success_at)}.` +
+      (h.cloud_last_error ? ` Cloud unreachable: ${h.cloud_last_error}. Retrying automatically.` : "");
+  } else {
+    label = `All changes synced · ${ago(h.cloud_last_success_at)}`;
+    title = "Every change on this server has been acknowledged by the cloud.";
+  }
+  return <Link to="/settings?tab=sync" className={`sync ${tone}`} title={title}><span className="dot" /> <span className="label">{label}</span></Link>;
 }
 
 export function Layout() {

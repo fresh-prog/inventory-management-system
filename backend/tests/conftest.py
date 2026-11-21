@@ -3,6 +3,8 @@ import uuid
 
 os.environ.setdefault("APP_DATABASE_URL", "postgresql+psycopg://app:app@localhost:5432/restaurant_test")
 os.environ.setdefault("APP_ENV", "test")
+import tempfile  # noqa: E402
+os.environ.setdefault("APP_FILES_DIR", tempfile.mkdtemp(prefix="kl-files-"))
 
 import pytest
 from alembic import command
@@ -35,6 +37,7 @@ def clean_db(request, engine):
         return
     with engine.begin() as c:
         c.execute(text(f"TRUNCATE {c.execute(text(TABLES_SQL)).scalar()} RESTART IDENTITY CASCADE"))
+        c.execute(text("INSERT INTO sync_state (id) VALUES (1)"))
     yield
 
 
@@ -47,11 +50,18 @@ def client(engine):
 class Api:
     """Small helper around TestClient with auth and idempotency keys."""
 
-    def __init__(self, client, token):
-        self.c, self.token = client, token
+    def __init__(self, client, token, device=True):
+        self.c, self.token, self.device = client, token, None
+        if device:  # every write must come from a registered device
+            r = client.post("/api/v1/devices", json={"name": "test device"},
+                            headers={"Authorization": f"Bearer {token}"})
+            assert r.status_code == 201, r.text
+            self.device = r.json()["id"]
 
     def h(self, key=None, extra=None):
         h = {"Authorization": f"Bearer {self.token}"}
+        if self.device:
+            h["X-Device-Id"] = self.device
         if key is not False:
             h["Idempotency-Key"] = key or str(uuid.uuid4())
         return {**h, **(extra or {})}

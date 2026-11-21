@@ -35,6 +35,8 @@ def main():
                                 "owner_password": OWNER["password"]}, idem=False)
     tok = c.post(BASE + "/auth/login", json=OWNER).json()["access_token"]
     H["Authorization"] = f"Bearer {tok}"
+    # every change must come from a registered device
+    H["X-Device-Id"] = c.post(BASE + "/devices", json={"name": "Demo loader"}, headers=H).json()["id"]
     if call("GET", "/ingredients")["total"]:
         print("Demo data already present.")
         return

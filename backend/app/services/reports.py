@@ -150,7 +150,7 @@ def dashboard(db: Session, branch_id: uuid.UUID, today: date | None = None) -> d
     levels = stock_levels(db, branch_id)
     recipes = recipe_food_costs(db, branch_id)
     pending = db.scalar(select(func.count()).select_from(OutboxEvent).where(
-        OutboxEvent.branch_id == branch_id, OutboxEvent.acked_at.is_(None)))
+        OutboxEvent.branch_id == branch_id, OutboxEvent.status.in_(["pending", "retry", "failed"])))
     return {
         "as_of": now(), "period": {"from": start.date(), "to": (end - timedelta(days=1)).date()},
         "inventory_value": {"value": inventory_value(db, branch_id), "cost_basis": "fifo"},

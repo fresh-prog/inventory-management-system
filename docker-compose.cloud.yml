@@ -1,0 +1,49 @@
+# Cloud: central PostgreSQL + cloud API/console + public HTTPS. One per organisation.
+# Branch business data lives in one isolated schema per branch (br_<id>), written only by sync.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: restaurant_cloud
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes: [clouddb:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d restaurant_cloud"]
+      interval: 10s
+      retries: 10
+
+  cloud:
+    build: .
+    restart: unless-stopped
+    depends_on: { db: { condition: service_healthy } }
+    env_file: .env.cloud
+    environment:
+      APP_ENV: production
+      APP_DEPLOYMENT_PROFILE: cloud
+    secrets: [db_password]
+    # migrate the control plane AND every branch replica schema before serving (upgrade the cloud first)
+    command: ["sh", "-c", "export APP_DATABASE_URL=postgresql+psycopg://app:$$(cat /run/secrets/db_password)@db:5432/restaurant_cloud && python -m app.cloud.cli migrate && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers"]
+    expose: ["8000"]
+    volumes: [cloudfiles:/data/files]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [cloud]
+    ports: ["80:80", "443:443"]
+    env_file: .env.cloud
+    volumes:
+      - ./deploy/Caddyfile.cloud:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+
+secrets:
+  db_password:
+    file: ./secrets/cloud_db_password.txt
+
+volumes:
+  clouddb:
+  cloudfiles:
+  caddydata:

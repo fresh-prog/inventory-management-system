@@ -12,7 +12,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from ..errors import BusinessRuleError, Conflict
-from ..models import AuditLog, IdempotencyRecord, OutboxEvent
+from ..models import AuditLog, IdempotencyRecord
 from ..security import Principal
 
 
@@ -26,9 +26,12 @@ def audit(db: Session, p: Principal | None, action: str, entity: str,
 
 def emit(db: Session, branch_id: uuid.UUID, topic: str, aggregate_id: uuid.UUID | None,
          payload: dict) -> None:
-    """Write a durable sync record in the SAME transaction as the business change."""
-    db.add(OutboxEvent(branch_id=branch_id, topic=topic, aggregate_id=aggregate_id,
-                       payload=jsonable_encoder(payload)))
+    """Name the business operation of the current transaction. The change capture writes the
+    outbox record (with full row images) at commit, atomically with the change itself."""
+    db.info.setdefault("op", topic)
+    db.info.setdefault("events", []).append(
+        {"topic": topic, "aggregate_id": str(aggregate_id) if aggregate_id else None,
+         "summary": jsonable_encoder(payload)})
 
 
 def _hash(body: Any) -> str:

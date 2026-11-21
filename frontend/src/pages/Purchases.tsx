@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import {
   BasisTag, Button, Card, Confirm, Empty, ErrorBox, Field, LinkButton, Loading, Page, SearchSelect, StatusBadge, useToast,
 } from "../components/ui";
-import { NetworkError, get, newKey, post, qs } from "../lib/api";
+import { NetworkError, get, newKey, openFile, post, qs, uploadFile } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { useDraft } from "../lib/hooks";
 import { date, dateTime, money, mul, num, qty, smartQty, today, unitCost } from "../lib/format";
@@ -205,6 +205,7 @@ export function PurchaseDetail() {
             <span>Tax</span><span className="num">{money(p.tax_total)}</span><span className="grand">Total</span><span className="num grand">{money(p.total)}</span></div>
             <p className="muted small">"Stock cost" spreads the invoice discount over the items{Number(p.tax_total) > 0 ? " and excludes recoverable VAT" : ""}; it is the cost each FIFO batch carries. <BasisTag basis="fifo" /></p></div>
         </Card>
+        <Attachments purchaseId={p.id} canUpload={can("purchase.create") && p.status === "confirmed"} />
         <Card title="Payments" pad={false}>
           {!p.payments.length ? <Empty title="No payments yet" /> : (
             <div className="table-wrap"><table><thead><tr><th>Date</th><th>Method</th><th className="hide-sm">Reference</th><th className="num">Applied to this invoice</th><th>Status</th></tr></thead>
@@ -221,5 +222,33 @@ export function PurchaseDetail() {
         </Confirm>)}
       {payOpen && <PaymentModal supplierId={p.supplier_id} preselect={p.id} onClose={() => setPayOpen(false)} />}
     </Page>
+  );
+}
+
+function Attachments({ purchaseId, canUpload }: { purchaseId: string; canUpload: boolean }) {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const q = useQuery({ queryKey: ["attachments", purchaseId], queryFn: () => get<any[]>(`/purchases/${purchaseId}/attachments`) });
+  const up = useMutation({
+    mutationFn: (f: File) => uploadFile(`/purchases/${purchaseId}/attachments`, f),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["attachments", purchaseId] }); qc.invalidateQueries({ queryKey: ["health"] }); toast("good", "Receipt saved on the restaurant server"); },
+  });
+  const [openErr, setOpenErr] = useState<unknown>(null);
+  return (
+    <Card title="Receipts & documents" pad={false} actions={canUpload && (
+      <label className="btn secondary sm" style={{ cursor: "pointer" }}>
+        {up.isPending ? <span className="spinner" /> : null} Add photo or PDF
+        <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment" hidden
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) up.mutate(f); e.target.value = ""; }} />
+      </label>)}>
+      <ErrorBox error={up.error || openErr} />
+      {!q.data?.length ? <Empty title="No receipt attached">Photograph the supplier invoice so the original is kept with this purchase.</Empty> : (
+        <ul className="list-plain">{q.data.map((f) => (
+          <li key={f.id}><span><button className="btn ghost sm" onClick={() => openFile(f.id).catch(setOpenErr)}>{f.name}</button>
+            <div className="muted small">{(f.size_bytes / 1024).toFixed(0)} KB · {dateTime(f.created_at)} · SHA-256 {f.sha256.slice(0, 12)}…</div></span>
+            <span className="row" style={{ gap: 6 }}><span className="badge good">saved locally</span>
+              {f.cloud_status === "verified" ? <span className="badge good" title={`Checksum verified ${dateTime(f.cloud_verified_at)}`}>in cloud ✓</span>
+                : <span className="badge warn" title="Will be uploaded and checksum-verified on the next sync">not yet in cloud</span>}</span></li>))}</ul>)}
+    </Card>
   );
 }

@@ -11,16 +11,20 @@ ingredient prices and recipe costs, and updates the supplier balance.
 
 ![Dashboard](docs/screenshots/02-dashboard.png)
 
-## Status — Stage 2: MVP ✅
-All 14 MVP acceptance criteria are demonstrated by automated tests: 61 backend tests on real PostgreSQL,
-including concurrency, atomicity and backup/restore, plus 12 end-to-end UI checks on desktop, phone and tablet.
-See **[docs/MVP-REPORT.md](docs/MVP-REPORT.md)** for the evidence, known limitations and next steps.
-The app runs fully on a local branch server without internet. **Cloud sync is not built yet, so it is not "hybrid-ready".**
+## Status — Stage 3: hybrid offline/online ✅
+* **Stage 2 (MVP):** costing, purchasing, suppliers, FIFO inventory, reports. All 14 acceptance criteria. [MVP report](docs/MVP-REPORT.md)
+* **Stage 3 (hybrid):**
+  * Each restaurant runs on its own server without internet.
+  * Every transaction is captured atomically into a durable outbox and synchronised to a cloud. The cloud keeps an isolated read replica per branch, with central reporting and monitoring, and two-factor remote access.
+  * Remote changes are executed by the branch, with explicit conflict rules; there is no last-write-wins.
+  * Receipts are stored locally, then uploaded resumably with checksum verification.
+  * 24 sync tests with real restarts, lost acknowledgements, interrupted uploads and database restores prove exact branch/cloud convergence.
+  * See the [sync test report](docs/SYNC-TEST-REPORT.md), [architecture](docs/SYNC-ARCHITECTURE.md) and [recovery runbook](docs/SYNC-RUNBOOK.md).
 
 | | |
 |---|---|
-| Install & operate | [docs/INSTALL.md](docs/INSTALL.md) |
-| API | [docs/API.md](docs/API.md) · [OpenAPI](docs/api/openapi.json) · live at `/api/docs` |
+| Install & operate | [docs/INSTALL.md](docs/INSTALL.md) · [sync recovery runbook](docs/SYNC-RUNBOOK.md) |
+| API | [docs/API.md](docs/API.md) · OpenAPI [branch](docs/api/openapi.json) / [cloud](docs/api/openapi-cloud.json) · live at `/api/docs` |
 | Database | [migration](backend/migrations/versions/) · [design](docs/02-database-design.md) |
 | Test results | [docs/test-results.txt](docs/test-results.txt) |
 | Architecture & decisions | [docs/01-architecture.md](docs/01-architecture.md) · [ADRs](docs/adr/) · [business rules](docs/03-business-rules.md) |
@@ -41,4 +45,4 @@ Then open http://localhost:5173. Optional demo data: `backend/.venv/bin/python s
 
 ## Stack
 React 18 + TypeScript PWA (TanStack Query, IndexedDB drafts) · Python FastAPI modular monolith · SQLAlchemy 2 + Alembic ·
-PostgreSQL 16 · Docker Compose + Caddy (HTTPS on the LAN).
+PostgreSQL 16 (branch + cloud, schema per branch) · transactional outbox sync worker · Docker Compose + Caddy (HTTPS).
