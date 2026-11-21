@@ -5,3 +5,7 @@ __pycache__/
 .env
 node_modules/
 dist/
+backups/
+*.dump
+*.enc
+frontend/test-results/
