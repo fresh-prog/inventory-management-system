@@ -106,7 +106,7 @@ class OutboxEvent(Base):
         BigInteger, outbox_seq, server_default=outbox_seq.next_value(), unique=True)
     kind: Mapped[str] = mapped_column(String(16), default="changeset", server_default="changeset")
     topic: Mapped[str] = mapped_column(String(64))  # operation type, e.g. purchase.confirmed
-    aggregate_id: Mapped[uuid.UUID | None]
+    aggregate_id: Mapped[uuid.UUID | None] = mapped_column(index=True)  # per-record sync status
     device_id: Mapped[uuid.UUID | None]
     user_id: Mapped[uuid.UUID | None]
     schema_version: Mapped[str] = mapped_column(String(40), default="", server_default="")

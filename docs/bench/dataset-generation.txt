@@ -1,0 +1,10 @@
+suppliers                         60 in     0.2s  (  253.6/s,    3.9 ms each)
+ingredients                     3000 in    24.5s  (  122.5/s,    8.2 ms each)
+purchases (3 lines each)        2000 in    55.6s  (   36.0/s,   27.8 ms each)
+recipes (8-15 lines, published)     300 in     8.7s  (   34.4/s,   29.1 ms each)
+purchases (with re-costing)     8000 in   374.5s  (   21.4/s,   46.8 ms each)
+consumptions                   25000 in   276.2s  (   90.5/s,   11.0 ms each)
+production runs                 2000 in   130.7s  (   15.3/s,   65.4 ms each)
+payments                        4000 in    59.1s  (   67.7/s,   14.8 ms each)
+waste adjustments               3000 in    31.4s  (   95.5/s,   10.5 ms each)
+total 961s

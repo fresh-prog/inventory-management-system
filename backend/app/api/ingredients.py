@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..domain.units import UNITS
-from ..jsonenc import enc
+from ..jsonenc import J, enc
 from ..models import (
     Ingredient, IngredientBranchSetting, IngredientCategory, IngredientCurrentCost, IngredientPriceHistory,
     Supplier, SupplierIngredient,
@@ -40,12 +40,12 @@ def units():
 
 @router.get("/categories")
 def categories(_: Principal = Depends(require("ingredient.read")), db: Session = Depends(get_db)):
-    return enc([{"id": c.id, "name": c.name} for c in
+    return J([{"id": c.id, "name": c.name} for c in
                 db.scalars(select(IngredientCategory).order_by(IngredientCategory.name))])
 
 
 @router.get("")
-def list_ingredients(q: str | None = None, active: bool | None = None, limit: int = Query(200, le=500),
+def list_ingredients(q: str | None = Query(None, max_length=100), active: bool | None = None, limit: int = Query(200, ge=1, le=5000),
                      offset: int = 0, p: Principal = Depends(require("ingredient.read")),
                      db: Session = Depends(get_db)):
     stmt = select(Ingredient).order_by(Ingredient.name)
@@ -61,7 +61,7 @@ def list_ingredients(q: str | None = None, active: bool | None = None, limit: in
         IngredientCurrentCost.branch_id == p.branch.id, IngredientCurrentCost.ingredient_id.in_(ids)))}
     settings = {s.ingredient_id: s for s in db.scalars(select(IngredientBranchSetting).where(
         IngredientBranchSetting.branch_id == p.branch.id, IngredientBranchSetting.ingredient_id.in_(ids)))}
-    return enc({"total": total, "items": [ingredient_out(i, setting=settings.get(i.id), cost=costs.get(i.id))
+    return J({"total": total, "items": [ingredient_out(i, setting=settings.get(i.id), cost=costs.get(i.id))
                                           for i in ings]})
 
 
@@ -69,12 +69,12 @@ def list_ingredients(q: str | None = None, active: bool | None = None, limit: in
 def create(body: IngredientIn, p: Principal = Depends(require("ingredient.write")), db: Session = Depends(get_db)):
     ing = svc.create_ingredient(db, p, body.model_dump())
     db.commit()
-    return enc(_full(db, p, ing))
+    return J(_full(db, p, ing), 201)
 
 
 @router.get("/{ingredient_id}")
 def get(ingredient_id: uuid.UUID, p: Principal = Depends(require("ingredient.read")), db: Session = Depends(get_db)):
-    return enc(_full(db, p, svc.get_ingredient(db, ingredient_id)))
+    return J(_full(db, p, svc.get_ingredient(db, ingredient_id)))
 
 
 @router.patch("/{ingredient_id}")
@@ -83,7 +83,7 @@ def patch(ingredient_id: uuid.UUID, body: IngredientPatch, if_match: int | None 
     ing = svc.get_ingredient(db, ingredient_id)
     svc.update_ingredient(db, p, ing, body.model_dump(exclude_unset=True), if_match)
     db.commit()
-    return enc(_full(db, p, ing))
+    return J(_full(db, p, ing))
 
 
 @router.get("/{ingredient_id}/price-history")
@@ -95,7 +95,7 @@ def price_history(ingredient_id: uuid.UUID, p: Principal = Depends(require("ingr
                              IngredientPriceHistory.branch_id == p.branch.id)
                       .order_by(IngredientPriceHistory.effective_date.desc(),
                                 IngredientPriceHistory.created_at.desc())).all()
-    return enc([{"id": h.id, "source": h.source, "supplier": n, "effective_date": h.effective_date,
+    return J([{"id": h.id, "source": h.source, "supplier": n, "effective_date": h.effective_date,
                  "purchase_quantity": h.purchase_quantity, "purchase_unit": h.purchase_unit,
                  "purchase_amount": h.purchase_amount, "cost_per_base_unit": h.cost_per_base_unit,
                  "previous_cost_per_base_unit": h.previous_cost_per_base_unit, "currency": h.currency,
@@ -112,4 +112,4 @@ def manual_price(ingredient_id: uuid.UUID, body: PriceIn, p: Principal = Depends
     svc.record_manual_price(db, p, ing, body.quantity, body.unit, body.amount,
                             body.effective_date or date.today(), body.note)
     db.commit()
-    return enc(_full(db, p, ing))
+    return J(_full(db, p, ing), 201)

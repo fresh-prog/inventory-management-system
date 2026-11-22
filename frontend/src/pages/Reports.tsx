@@ -5,8 +5,13 @@ import { BasisTag, Card, Empty, ErrorBox, Field, Loading, Page, Tabs } from "../
 import { get, qs } from "../lib/api";
 import { date, dateTime, money, num, pct, qty, today, unitCost } from "../lib/format";
 
-function toCsv(rows: Record<string, any>[], cols: [string, string][]): string {
-  const esc = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+export function toCsv(rows: Record<string, any>[], cols: [string, string][]): string {
+  // Neutralise spreadsheet formulas (CSV injection): a cell starting with = + - @ TAB CR is prefixed with '
+  const esc = (v: any) => {
+    let s = String(v ?? "");
+    if (/^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = "'" + s;
+    return `"${s.replace(/"/g, '""')}"`;
+  };
   return [cols.map((c) => esc(c[1])).join(","), ...rows.map((r) => cols.map((c) => esc(r[c[0]])).join(","))].join("\n");
 }
 function download(name: string, csv: string) {

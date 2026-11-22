@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
-  BasisTag, Button, Card, Confirm, Empty, ErrorBox, Field, LinkButton, Loading, Page, SearchSelect, StatusBadge, useToast,
+  BasisTag, Button, Card, Confirm, Empty, ErrorBox, Field, LinkButton, Loading, Page, SearchSelect, StatusBadge, SyncBadge, useToast,
 } from "../components/ui";
 import { NetworkError, get, newKey, openFile, post, qs, uploadFile } from "../lib/api";
 import { useAuth } from "../lib/auth";
@@ -19,8 +19,12 @@ export function PurchasesPage() {
   const filters = { supplier_id: params.get("supplier_id") || "", payment_status: params.get("payment_status") || "",
                     date_from: params.get("date_from") || "", date_to: params.get("date_to") || "" };
   const suppliers = useQuery({ queryKey: ["suppliers"], queryFn: () => get<Supplier[]>("/suppliers") });
-  const q = useQuery({ queryKey: ["purchases", filters], queryFn: () => get(`/purchases${qs({ ...filters, limit: 200 })}`) });
-  const setFilter = (k: string, v: string) => { const p = new URLSearchParams(params); v ? p.set(k, v) : p.delete(k); setParams(p); };
+  const PAGE = 50;
+  const page = Number(params.get("page") || 0);
+  const q = useQuery({ queryKey: ["purchases", filters, page], queryFn: () => get(`/purchases${qs({ ...filters, limit: PAGE, offset: page * PAGE })}`),
+                       placeholderData: (prev) => prev });
+  const setFilter = (k: string, v: string) => { const p = new URLSearchParams(params); v ? p.set(k, v) : p.delete(k); p.delete("page"); setParams(p); };
+  const setPage = (n: number) => { const p = new URLSearchParams(params); n ? p.set("page", String(n)) : p.delete("page"); setParams(p); };
   const rows = q.data?.items || [];
   return (
     <Page title="Purchases" subtitle="Supplier invoices. Confirming one adds the stock, updates prices and the supplier balance in a single step."
@@ -44,9 +48,15 @@ export function PurchasesPage() {
                 <td>{date(p.invoice_date)}</td><td><Link to={`/purchases/${p.id}`} onClick={(e) => e.stopPropagation()}>{p.invoice_ref}</Link><div className="muted small">{p.line_count} item(s)</div></td>
                 <td className="hide-sm">{p.supplier_name}</td><td className="num">{money(p.total)}</td><td className="num hide-sm">{money(p.amount_paid)}</td>
                 <td className="num">{money(p.outstanding)}</td><td><StatusBadge status={p.payment_status} /></td></tr>))}</tbody>
-            <tfoot><tr><td colSpan={3} className="hide-sm">Total ({rows.length})</td><td className="num">{money(rows.reduce((s: number, r: any) => s + (r.status === "confirmed" ? num(r.total) : 0), 0))}</td>
+            <tfoot><tr><td colSpan={3} className="hide-sm">This page ({rows.length} of {q.data.total})</td><td className="num">{money(rows.reduce((s: number, r: any) => s + (r.status === "confirmed" ? num(r.total) : 0), 0))}</td>
               <td className="num hide-sm">{money(rows.reduce((s: number, r: any) => s + num(r.amount_paid), 0))}</td><td className="num">{money(rows.reduce((s: number, r: any) => s + num(r.outstanding), 0))}</td><td /></tr></tfoot>
           </table></div>)}
+        {q.data && q.data.total > PAGE && (
+          <div className="card-body row between">
+            <span className="muted small">Page {page + 1} of {Math.ceil(q.data.total / PAGE)} · {q.data.total} invoices</span>
+            <span className="row"><Button variant="secondary" className="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button>
+              <Button variant="secondary" className="sm" disabled={(page + 1) * PAGE >= q.data.total} onClick={() => setPage(page + 1)}>Next</Button></span>
+          </div>)}
       </Card>
     </Page>
   );
@@ -182,6 +192,7 @@ export function PurchaseDetail() {
     <Page title={`Invoice ${p.invoice_ref}`} subtitle={<><Link to={`/suppliers/${p.supplier_id}`}>{p.supplier_name}</Link> · {date(p.invoice_date)} · recorded {dateTime(p.created_at)}</>}
       actions={<>
         <StatusBadge status={p.payment_status} />
+        <SyncBadge status={p.sync_status} />
         {p.status === "confirmed" && Number(p.outstanding) > 0 && can("payment.post") && <Button onClick={() => setPayOpen(true)}>Record payment</Button>}
         {p.status === "confirmed" && can("purchase.void") && <Button variant="secondary" onClick={() => setVoidOpen(true)}>Void</Button>}
       </>}>
@@ -210,7 +221,7 @@ export function PurchaseDetail() {
           {!p.payments.length ? <Empty title="No payments yet" /> : (
             <div className="table-wrap"><table><thead><tr><th>Date</th><th>Method</th><th className="hide-sm">Reference</th><th className="num">Applied to this invoice</th><th>Status</th></tr></thead>
               <tbody>{p.payments.map((x: any) => (<tr key={x.id} style={x.status === "voided" ? { opacity: .55 } : undefined}><td>{date(x.paid_on)}</td><td>{x.method.replace(/_/g, " ")}</td><td className="hide-sm">{x.reference || "—"}</td>
-                <td className="num">{money(x.allocated)}</td><td><StatusBadge status={x.status} /></td></tr>))}</tbody></table></div>)}
+                <td className="num">{money(x.allocated)}</td><td><StatusBadge status={x.status} /> <SyncBadge status={x.sync_status} /></td></tr>))}</tbody></table></div>)}
         </Card>
         {p.notes && <Card title="Notes"><p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{p.notes}</p></Card>}
       </div>

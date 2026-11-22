@@ -49,6 +49,11 @@ def get_engine():
 
 def make_sessionmaker(engine, capture: bool) -> sessionmaker[Session]:
     """capture=True turns on change capture into the sync outbox (branch profile)."""
+    if capture:
+        from . import models  # noqa: F401  (registers the capture hooks)
+        from .sync import capture as cap
+        if not cap.hooks_registered():
+            raise RuntimeError("change capture hooks are not registered; refusing to write unsynchronised data")
     return sessionmaker(bind=engine, expire_on_commit=False, info={"capture": capture})
 
 

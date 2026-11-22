@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..jsonenc import enc
+from ..jsonenc import J, enc
 from ..models import Ingredient, StockBatch, StockCount, StockItem, StockMovement, User
 from ..schemas.inputs import AdjustmentIn, ConsumptionIn, CountLinesIn, CountStartIn, ProductionIn
 from ..security import Principal, require
@@ -26,7 +26,7 @@ def levels(include_inactive: bool = False, p: Principal = Depends(require("stock
     rows = stock_levels(db, p.branch.id, include_inactive)
     from ..services.reports import inventory_value
     total = inventory_value(db, p.branch.id)  # same definition as the dashboard (exact sum, rounded once)
-    return enc({"cost_basis": "fifo", "total_value": total, "items": rows})
+    return J({"cost_basis": "fifo", "total_value": total, "items": rows})
 
 
 @router.get("/ingredients/{ingredient_id}/batches")
@@ -38,7 +38,7 @@ def batches(ingredient_id: uuid.UUID, include_empty: bool = False,
     if not include_empty:
         q = q.where(StockBatch.remaining_quantity > 0)
     rows = db.scalars(q.order_by(StockBatch.received_at, StockBatch.sequence)).all()
-    return enc({"ingredient_id": ing.id, "name": ing.name, "base_unit": base_unit(ing), "cost_basis": "fifo",
+    return J({"ingredient_id": ing.id, "name": ing.name, "base_unit": base_unit(ing), "cost_basis": "fifo",
                 "batches": [{"id": b.id, "sequence": b.sequence, "source_type": b.source_type,
                              "purchase_id": b.purchase_id, "supplier": b.supplier.name if b.supplier else None,
                              "purchase_date": b.purchase_date, "received_at": b.received_at,
@@ -67,7 +67,7 @@ def movements(ingredient_id: uuid.UUID | None = None, type: str | None = None,
     if date_to:
         q = q.where(StockMovement.occurred_at <= date_to)
     rows = db.execute(q.order_by(StockMovement.recorded_at.desc()).limit(limit).offset(offset)).all()
-    return enc({"cost_basis": "fifo", "items": [{
+    return J({"cost_basis": "fifo", "items": [{
         "id": m.id, "ingredient_id": ing.id, "ingredient_name": ing.name, "type": m.type,
         "quantity_base": m.quantity, "base_unit": base_unit(ing), "total_cost": m.total_cost,
         "shortfall_quantity": m.shortfall_quantity, "reason": m.reason, "note": m.note,
@@ -112,7 +112,7 @@ def requirements(recipe_id: uuid.UUID, batches: float | None = None, portions: f
         out.append({"ingredient_id": ing.id, "name": ing.name, "required_base": base, "base_unit": base_unit(ing),
                     "required": from_base_qty(ing, base, ing.consumption_unit), "unit": ing.consumption_unit,
                     "on_hand_base": have, "sufficient": have >= base})
-    return enc({"recipe_version": v.version_no, "batches": b, "portions": b * v.portions_per_batch, "lines": out})
+    return J({"recipe_version": v.version_no, "batches": b, "portions": b * v.portions_per_batch, "lines": out})
 
 
 @router.post("/production-runs", status_code=201)
@@ -151,7 +151,7 @@ def _count_out(db, c: StockCount) -> dict:
 def counts(p: Principal = Depends(require("stock.read")), db: Session = Depends(get_db)):
     rows = db.scalars(select(StockCount).where(StockCount.branch_id == p.branch.id)
                       .order_by(StockCount.started_at.desc()).limit(50)).all()
-    return enc([{"id": c.id, "status": c.status, "note": c.note, "started_at": c.started_at,
+    return J([{"id": c.id, "status": c.status, "note": c.note, "started_at": c.started_at,
                  "approved_at": c.approved_at, "lines": len(c.lines),
                  "counted": sum(1 for l in c.lines if l.counted_quantity is not None)} for c in rows])
 
@@ -160,12 +160,12 @@ def counts(p: Principal = Depends(require("stock.read")), db: Session = Depends(
 def start_count(body: CountStartIn, p: Principal = Depends(require("stock.count")), db: Session = Depends(get_db)):
     c = stock_ops.start_count(db, p, body.note, body.ingredient_ids)
     db.commit()
-    return enc(_count_out(db, c))
+    return J(_count_out(db, c), 201)
 
 
 @router.get("/counts/{count_id}")
 def get_count(count_id: uuid.UUID, p: Principal = Depends(require("stock.read")), db: Session = Depends(get_db)):
-    return enc(_count_out(db, stock_ops.get_count(db, p, count_id)))
+    return J(_count_out(db, stock_ops.get_count(db, p, count_id)))
 
 
 @router.put("/counts/{count_id}/lines")
@@ -173,7 +173,7 @@ def enter(count_id: uuid.UUID, body: CountLinesIn, p: Principal = Depends(requir
           db: Session = Depends(get_db)):
     c = stock_ops.enter_counts(db, p, count_id, body.model_dump()["lines"])
     db.commit()
-    return enc(_count_out(db, c))
+    return J(_count_out(db, c))
 
 
 @router.post("/counts/{count_id}/approve")

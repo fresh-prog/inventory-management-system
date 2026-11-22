@@ -1,0 +1,77 @@
+{
+ "ran_at": "2026-11-22T01:41:11Z",
+ "results": [
+  {
+   "scenario": "power interruption (PostgreSQL crash + API kill -9 during writes; back in 1.6s)",
+   "pass": true,
+   "evidence": {
+    "app_integrity_ok": true,
+    "sql_violations": 0,
+    "requests": 499,
+    "acknowledged_before_crash": 292,
+    "unanswered_or_failed": 207,
+    "acknowledged_but_missing": 0,
+    "retry_replayed": 292,
+    "retry_executed_once": 207,
+    "retry_errors": 0,
+    "duplicate_invoices": 0,
+    "purchases_without_sync_record": 0,
+    "app_integrity_after_retries": true
+   }
+  },
+  {
+   "scenario": "local server restart (API kill -9 under load)",
+   "pass": true,
+   "evidence": {
+    "app_integrity_ok": true,
+    "sql_violations": 0,
+    "requests": 275,
+    "acknowledged_before_crash": 153,
+    "unanswered_or_failed": 122,
+    "acknowledged_but_missing": 0,
+    "retry_replayed": 153,
+    "retry_executed_once": 122,
+    "retry_errors": 0,
+    "duplicate_invoices": 0,
+    "purchases_without_sync_record": 0,
+    "app_integrity_after_retries": true
+   }
+  },
+  {
+   "scenario": "database unavailable (stopped while the app runs)",
+   "pass": true,
+   "evidence": {
+    "read_status": 503,
+    "read_code": "DATABASE_UNAVAILABLE",
+    "write_status": 503,
+    "write_detail": "The restaurant database is not reachable right now. Nothing was saved. Please try again in a moment.",
+    "health_status": 503,
+    "read_after_recovery": 200,
+    "same_write_after_recovery": 201
+   }
+  },
+  {
+   "scenario": "disk full while saving a receipt",
+   "pass": true,
+   "evidence": {
+    "upload_with_space": 201,
+    "upload_when_full": 507,
+    "code": "STORAGE_FULL",
+    "detail": "The server is almost out of disk space, so the document was not saved. Ask the administrator to free space (the database needs it too).",
+    "attachments_recorded": 1,
+    "partial_files_left": 0,
+    "app_still_works": 200
+   }
+  },
+  {
+   "scenario": "failed invoice upload (connection lost mid-upload)",
+   "pass": true,
+   "evidence": {
+    "attachments_recorded": 0,
+    "files_on_disk": 0,
+    "app_still_works": 200,
+    "retry_upload": 201
+   }
+  }
+ ]
+}

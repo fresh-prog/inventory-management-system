@@ -5,9 +5,9 @@ branch (its own PostgreSQL schema) and never edits these rows, so no last-write-
 """
 
 # Alembic revision of the branch schema this code writes. Every event carries it.
-SCHEMA_VERSION = "0003audit"
+SCHEMA_VERSION = "0004perf"
 # Schema versions the cloud can apply (it must be upgraded before branches; supports N and N-1).
-KNOWN_SCHEMA_VERSIONS = ("511ffdd9a91e", "0002sync", "0003audit")
+KNOWN_SCHEMA_VERSIONS = ("511ffdd9a91e", "0002sync", "0003audit", "0004perf")
 
 # Foreign-key-safe order (parents first). Used for snapshots and as documentation.
 REPLICATED_TABLES = [

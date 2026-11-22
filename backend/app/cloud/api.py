@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..db import get_db
 from ..errors import BusinessRuleError, Forbidden, NotFound, Unauthorized
-from ..jsonenc import enc
+from ..jsonenc import J, enc
 from ..security import hash_password, verify_password
 from ..sync import signing
 from . import service as svc
@@ -116,7 +116,7 @@ def enroll(enrollment_token: str = Body(...), code: str = Body(...), db: Session
 
 @people.get("/me")
 def me(u: CloudUser = Depends(cloud_user)):
-    return enc({"id": u.id, "email": u.email, "display_name": u.display_name, "role": u.role, "profile": "cloud"})
+    return J({"id": u.id, "email": u.email, "display_name": u.display_name, "role": u.role, "profile": "cloud"})
 
 
 # ───────────────────────── branches & monitoring ─────────────────────────
@@ -148,7 +148,7 @@ def _branch_out(b: CloudBranch) -> dict:
 @people.get("/branches")
 def branches(u: CloudUser = Depends(cloud_user), db: Session = Depends(get_db)):
     rows = db.scalars(select(CloudBranch).order_by(CloudBranch.name)).all()
-    return enc([_branch_out(b) for b in rows if u.branch_scope is None or str(b.id) in u.branch_scope])
+    return J([_branch_out(b) for b in rows if u.branch_scope is None or str(b.id) in u.branch_scope])
 
 
 class BranchIn(BaseModel):
@@ -161,8 +161,8 @@ def create_branch(body: BranchIn, u: CloudUser = Depends(cloud_user), db: Sessio
     _need(u, "admin")
     b, code = svc.create_branch(db, u.id, body.code, body.name)
     db.commit()
-    return enc({**_branch_out(b), "registration_code": code,
-                "registration_expires_at": b.registration_expires_at})
+    return J({**_branch_out(b), "registration_code": code,
+                "registration_expires_at": b.registration_expires_at}, 201)
 
 
 @people.post("/branches/{branch_id}/registration-code")
@@ -195,7 +195,7 @@ def branch_detail(branch_id: uuid.UUID, request: Request, u: CloudUser = Depends
     files = db.execute(select(CloudFile.status, func.count()).where(CloudFile.cloud_branch_id == b.id)
                        .group_by(CloudFile.status)).all()
     total_events = db.scalar(select(func.count()).select_from(CloudInbox).where(CloudInbox.cloud_branch_id == b.id))
-    return enc({**_branch_out(b), "events_received": total_events, "files": dict(files),
+    return J({**_branch_out(b), "events_received": total_events, "files": dict(files),
                 "recent_events": [{"sequence": e.sequence, "id": e.event_id, "kind": e.kind, "topic": e.topic,
                                    "rows": e.row_count, "created_at": e.created_at, "received_at": e.received_at,
                                    "device_id": e.device_id, "user_id": e.user_id} for e in recent],
@@ -214,7 +214,7 @@ def branch_dashboard(branch_id: uuid.UUID, request: Request, u: CloudUser = Depe
     d["sync"] = _health(b)
     d["source"] = "cloud_replica"
     d["integrity_ok"] = integrity["ok"]
-    return enc(d)
+    return J(d)
 
 
 @people.get("/branches/{branch_id}/replica/{resource}")
@@ -253,7 +253,7 @@ def replica_list(branch_id: uuid.UUID, resource: str, request: Request, u: Cloud
                    for d in r.scalars(select(Device).order_by(Device.created_at))]
         else:
             raise NotFound("Unknown resource")
-    return enc(out)
+    return J(out)
 
 
 @people.get("/summary")
@@ -274,7 +274,7 @@ def central_summary(request: Request, u: CloudUser = Depends(cloud_user), db: Se
                         "recipes_over_target": len(d["recipes_over_target"]),
                         "consumption_cost": d["consumption"]["total"]})
         out.append(row)
-    return enc({"as_of": datetime.now(UTC), "branches": out})
+    return J({"as_of": datetime.now(UTC), "branches": out})
 
 
 # ───────────────────────── commands (remote management) ─────────────────────────
@@ -296,20 +296,20 @@ def create_command(branch_id: uuid.UUID, body: CommandIn, request: Request, u: C
     b = _branch_for(db, u, branch_id)
     cmd = svc.create_command(db, request.app.state.Session, b, u, body.type, body.payload)
     db.commit()
-    return enc(_cmd_out(cmd))
+    return J(_cmd_out(cmd), 201)
 
 
 @people.get("/branches/{branch_id}/commands")
 def list_commands(branch_id: uuid.UUID, u: CloudUser = Depends(cloud_user), db: Session = Depends(get_db)):
     b = _branch_for(db, u, branch_id)
-    return enc([_cmd_out(c) for c in db.scalars(select(BranchCommand).where(BranchCommand.cloud_branch_id == b.id)
+    return J([_cmd_out(c) for c in db.scalars(select(BranchCommand).where(BranchCommand.cloud_branch_id == b.id)
                                                  .order_by(BranchCommand.sequence.desc()).limit(200))])
 
 
 @people.get("/audit")
 def cloud_audit(u: CloudUser = Depends(cloud_user), db: Session = Depends(get_db)):
     _need(u, "admin")
-    return enc([{"at": a.at, "user_id": a.user_id, "branch_id": a.cloud_branch_id, "action": a.action,
+    return J([{"at": a.at, "user_id": a.user_id, "branch_id": a.cloud_branch_id, "action": a.action,
                  "detail": a.detail} for a in db.scalars(select(CloudAudit).order_by(CloudAudit.at.desc()).limit(200))])
 
 
@@ -337,26 +337,41 @@ class RegisterIn(BaseModel):
 @machine.post("/register")
 def register(body: RegisterIn, request: Request, db: Session = Depends(get_db)):
     b, secret = svc.register(db, request.app.state.engine, body.registration_code, body.branch)
-    return enc({"cloud_branch_id": b.id, "branch_secret": secret, "high_water": b.last_applied_seq,
+    return J({"cloud_branch_id": b.id, "branch_secret": secret, "high_water": b.last_applied_seq,
                 "schema": b.schema_name})
+
+
+MAX_DECOMPRESSED = 64 * 1024 * 1024
+
+
+def _decoded(request: Request, raw: bytes) -> bytes:
+    if request.headers.get("content-encoding") == "gzip":
+        import zlib
+        d = zlib.decompressobj(wbits=31)
+        out = d.decompress(raw, MAX_DECOMPRESSED)
+        if d.unconsumed_tail:
+            raise BusinessRuleError("Batch too large after decompression")
+        return out
+    return raw
 
 
 @machine.post("/events")
 def push_events(request: Request, auth=Depends(signed_branch)):
     import json
     b, raw = auth
+    raw = _decoded(request, raw)
     data = json.loads(raw or b"{}")
     events = data.get("events", [])
     if len(events) > 500:
         raise BusinessRuleError("At most 500 events per batch")
-    return enc(svc.apply_events(request.app.state.engine, request.app.state.Session, b.id, events, data.get("status")))
+    return J(svc.apply_events(request.app.state.engine, request.app.state.Session, b.id, events, data.get("status")))
 
 
 @machine.get("/commands")
 def pull_commands(after: int = Query(0, ge=0), auth=Depends(signed_branch), db: Session = Depends(get_db)):
     b, _ = auth
     b = db.get(CloudBranch, b.id)
-    return enc([{"id": c.id, "sequence": c.sequence, "type": c.type, "payload": c.payload,
+    return J([{"id": c.id, "sequence": c.sequence, "type": c.type, "payload": c.payload,
                  "created_by": c.created_by_name, "created_at": c.created_at}
                 for c in svc.pending_commands(db, b, after)])
 
@@ -387,6 +402,6 @@ def export_events(after: int = Query(0, ge=0), limit: int = Query(200, le=1000),
     b, _ = auth
     rows = db.scalars(select(CloudInbox).where(CloudInbox.cloud_branch_id == b.id, CloudInbox.sequence > after)
                       .order_by(CloudInbox.sequence).limit(limit)).all()
-    return enc([{"id": e.event_id, "sequence": e.sequence, "kind": e.kind, "topic": e.topic, "device_id": e.device_id,
+    return J([{"id": e.event_id, "sequence": e.sequence, "kind": e.kind, "topic": e.topic, "device_id": e.device_id,
                  "user_id": e.user_id, "schema_version": e.schema_version, "created_at": e.created_at,
                  "payload": e.payload} for e in rows])

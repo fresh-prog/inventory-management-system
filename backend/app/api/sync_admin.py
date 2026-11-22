@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..jsonenc import enc
+from ..jsonenc import J, enc
 from ..models import InboxEvent, OutboxEvent, SyncState
 from ..security import Principal, require
 from ..services.platform import audit
@@ -37,7 +37,7 @@ def _status(db: Session) -> dict:
 
 @router.get("/status")
 def status(_: Principal = Depends(require("report.read")), db: Session = Depends(get_db)):
-    return enc(_status(db))
+    return J(_status(db))
 
 
 @router.get("/queue")
@@ -45,7 +45,7 @@ def queue(state: str = "unsent", p: Principal = Depends(require("settings.manage
     states = {"unsent": ["pending", "retry", "failed"], "failed": ["failed"], "recent": ["acked"]}.get(state, [state])
     rows = db.scalars(select(OutboxEvent).where(OutboxEvent.status.in_(states))
                       .order_by(OutboxEvent.sequence.desc() if state == "recent" else OutboxEvent.sequence).limit(100)).all()
-    return enc([{"id": e.id, "sequence": e.sequence, "kind": e.kind, "topic": e.topic, "status": e.status,
+    return J([{"id": e.id, "sequence": e.sequence, "kind": e.kind, "topic": e.topic, "status": e.status,
                  "attempts": e.attempts, "next_attempt_at": e.next_attempt_at, "last_error": e.last_error,
                  "created_at": e.created_at, "acked_at": e.acked_at, "device_id": e.device_id, "user_id": e.user_id,
                  "schema_version": e.schema_version, "rows": len(e.payload.get("rows", []))} for e in rows])
@@ -54,7 +54,7 @@ def queue(state: str = "unsent", p: Principal = Depends(require("settings.manage
 @router.get("/commands")
 def commands(p: Principal = Depends(require("settings.manage")), db: Session = Depends(get_db)):
     rows = db.scalars(select(InboxEvent).order_by(InboxEvent.received_at.desc()).limit(50)).all()
-    return enc([{"id": c.event_id, "sequence": c.sequence, "type": c.type, "status": c.status, "result": c.result,
+    return J([{"id": c.event_id, "sequence": c.sequence, "type": c.type, "status": c.status, "result": c.result,
                  "received_at": c.received_at} for c in rows])
 
 
@@ -74,14 +74,14 @@ def register(body: RegisterIn, request: Request, p: Principal = Depends(require(
         raise BusinessRuleError(str(e))
     audit(db, p, "sync.register", "sync_state", None, {"cloud_url": body.cloud_url})
     db.commit()
-    return enc(_status(db))
+    return J(_status(db))
 
 
 @router.post("/run")
 def run_now(request: Request, p: Principal = Depends(require("settings.manage")), db: Session = Depends(get_db)):
     out = sync.run_cycle(request.app.state.Session, getattr(request.app.state, "cloud_http", None))
     db.expire_all()
-    return enc({"result": out, "status": _status(db)})
+    return J({"result": out, "status": _status(db)})
 
 
 @router.post("/retry-failed")

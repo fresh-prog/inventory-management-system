@@ -38,7 +38,7 @@ class StockBatch(Base):
     source_type: Mapped[str] = mapped_column(String(16))  # purchase | count_gain
     source_id: Mapped[uuid.UUID]
     supplier_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("supplier.id"))
-    purchase_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("purchase_invoice.id"))
+    purchase_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("purchase_invoice.id"), index=True)
     purchase_line_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("purchase_line.id"), unique=True)
     purchase_date: Mapped[date | None] = mapped_column(Date)
@@ -96,6 +96,8 @@ class StockMovement(Base):
         CheckConstraint("shortfall_quantity >= 0", name="shortfall"),
         CheckConstraint("source_id IS NOT NULL", name="traceable"),
         Index("ix_movement_item_time", "stock_item_id", "branch_id", "occurred_at"),
+        Index("ix_movement_branch_time", "branch_id", "occurred_at"),  # period reports
+        Index("ix_movement_recorded", "branch_id", "recorded_at"),  # history list (newest first)
     )
 
 
@@ -118,7 +120,7 @@ class ProductionRun(Base):
     __tablename__ = "production_run"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid7)
     branch_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("branch.id"))
-    recipe_version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("recipe_version.id"))
+    recipe_version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("recipe_version.id"), index=True)
     batches: Mapped[Decimal] = mapped_column(Qty)
     expected_portions: Mapped[Decimal] = mapped_column(Qty)
     actual_portions: Mapped[Decimal | None] = mapped_column(Qty)

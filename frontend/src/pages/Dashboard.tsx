@@ -23,7 +23,7 @@ export default function Dashboard() {
         <Stat label="Purchases this month" value={money(d.month_purchases)} hint="Confirmed invoices" to="/purchases" />
         <Stat label="Owed to suppliers" value={money(d.outstanding_payables)} tone={Number(d.outstanding_payables) > 0 ? "warn" : undefined}
           hint="Unpaid + partially paid invoices" to="/suppliers" />
-        <Stat label="Low-stock items" value={d.low_stock.length} tone={d.low_stock.length ? "bad" : "good"} hint="Below minimum level" to="/stock?filter=low" />
+        <Stat label="Low-stock items" value={d.low_stock_count ?? d.low_stock.length} tone={(d.low_stock_count ?? d.low_stock.length) ? "bad" : "good"} hint="Below minimum level" to="/stock?filter=low" />
       </div>
       <div className="grid cols-2">
         <Card title="Low stock" actions={<Link to="/stock?filter=low">View stock</Link>} pad={false}>

@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..jsonenc import enc
+from ..jsonenc import J, enc
 from ..models import AuditLog, PurchaseInvoice, Supplier, User
 from ..security import Principal, require
 from ..services import reports as svc
@@ -24,14 +24,14 @@ def _range(date_from: date | None, date_to: date | None):
 
 @router.get("/dashboard")
 def dashboard(p: Principal = Depends(require("report.read")), db: Session = Depends(get_db)):
-    return enc(svc.dashboard(db, p.branch.id))
+    return J(svc.dashboard(db, p.branch.id))
 
 
 @router.get("/reports/inventory-valuation")
 def valuation(p: Principal = Depends(require("report.read")), db: Session = Depends(get_db)):
     rows = svc.stock_levels(db, p.branch.id, include_inactive=True)
     rows = [r for r in rows if r["on_hand_base"] > 0 or r["is_active"]]
-    return enc({"cost_basis": "fifo", "as_of": now(), "total_value": svc.inventory_value(db, p.branch.id),
+    return J({"cost_basis": "fifo", "as_of": now(), "total_value": svc.inventory_value(db, p.branch.id),
                 "items": rows})
 
 
@@ -44,7 +44,7 @@ def purchases(date_from: date | None = None, date_to: date | None = None,
                       .where(PurchaseInvoice.branch_id == p.branch.id, PurchaseInvoice.status == "confirmed",
                              PurchaseInvoice.invoice_date >= df, PurchaseInvoice.invoice_date <= dt)
                       .group_by(Supplier.name).order_by(func.sum(PurchaseInvoice.total).desc())).all()
-    return enc({"from": df, "to": dt, "total": money(sum((r[2] for r in rows), 0)) if rows else 0,
+    return J({"from": df, "to": dt, "total": money(sum((r[2] for r in rows), 0)) if rows else 0,
                 "by_supplier": [{"supplier": n, "invoices": c, "total": t} for n, c, t in rows]})
 
 
@@ -52,24 +52,24 @@ def purchases(date_from: date | None = None, date_to: date | None = None,
 def consumption(date_from: date | None = None, date_to: date | None = None,
                 p: Principal = Depends(require("report.read")), db: Session = Depends(get_db)):
     df, dt, start, end = _range(date_from, date_to)
-    return enc({"from": df, "to": dt, **svc.consumption_summary(db, p.branch.id, start, end)})
+    return J({"from": df, "to": dt, **svc.consumption_summary(db, p.branch.id, start, end)})
 
 
 @router.get("/reports/recipe-costs")
 def recipe_costs(p: Principal = Depends(require("report.read")), db: Session = Depends(get_db)):
-    return enc({"cost_basis": "current", "items": svc.recipe_food_costs(db, p.branch.id)})
+    return J({"cost_basis": "current", "items": svc.recipe_food_costs(db, p.branch.id)})
 
 
 @router.get("/reports/price-changes")
 def price_changes(limit: int = Query(50, le=200), p: Principal = Depends(require("report.read")),
                   db: Session = Depends(get_db)):
-    return enc(svc.price_changes(db, p.branch.id, limit))
+    return J(svc.price_changes(db, p.branch.id, limit))
 
 
 @router.get("/reports/integrity")
 def integrity(p: Principal = Depends(require("report.read")), db: Session = Depends(get_db)):
     """Reconciles dashboard figures with the underlying records."""
-    return enc(svc.integrity_check(db, p.branch.id))
+    return J(svc.integrity_check(db, p.branch.id))
 
 
 @router.get("/audit-log")
@@ -80,5 +80,5 @@ def audit_log(entity: str | None = None, limit: int = Query(100, le=500), offset
     if entity:
         q = q.where(AuditLog.entity == entity)
     rows = db.execute(q.order_by(AuditLog.at.desc()).limit(limit).offset(offset)).all()
-    return enc([{"id": a.id, "at": a.at, "user": u, "action": a.action, "entity": a.entity,
+    return J([{"id": a.id, "at": a.at, "user": u, "action": a.action, "entity": a.entity,
                  "entity_id": a.entity_id, "detail": a.detail} for a, u in rows])

@@ -11,7 +11,7 @@ import type { Ingredient, Supplier } from "../lib/types";
 import { RecipesList } from "./Recipes";
 
 export function useIngredients() {
-  return useQuery({ queryKey: ["ingredients"], queryFn: () => get<{ items: Ingredient[] }>("/ingredients?limit=500"),
+  return useQuery({ queryKey: ["ingredients"], queryFn: () => get<{ items: Ingredient[] }>("/ingredients?limit=5000"),
                     select: (d) => d.items, staleTime: 30_000 });
 }
 
@@ -35,6 +35,7 @@ function IngredientList() {
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState("");
   const [showInactive, setShowInactive] = useState(false);
+  const [shown, setShown] = useState(100);  // render incrementally: large catalogues stay fast on phones
   const nav = useNavigate();
   const items = q.data || [];
   const cats = useMemo(() => [...new Set(items.map((i) => i.category).filter(Boolean))].sort() as string[], [items]);
@@ -55,7 +56,7 @@ function IngredientList() {
       {filtered.length === 0 ? <Empty title={items.length ? "No ingredients match" : "No ingredients yet"}>Add the ingredients you buy to start costing recipes.</Empty> : (
         <div className="table-wrap"><table>
           <thead><tr><th>Ingredient</th><th className="hide-sm">Category</th><th className="hide-sm">Buy / use in</th><th className="num">Current cost</th><th className="hide-sm">Since</th><th>Status</th></tr></thead>
-          <tbody>{filtered.map((i) => (
+          <tbody>{filtered.slice(0, shown).map((i) => (
             <tr key={i.id} className="clickable" onClick={() => nav(`/ingredients/${i.id}`)}>
               <td><Link to={`/ingredients/${i.id}`} onClick={(e) => e.stopPropagation()}>{i.name}</Link><div className="muted small mono">{i.code}</div></td>
               <td className="hide-sm">{i.category || "—"}</td>
@@ -65,6 +66,9 @@ function IngredientList() {
               <td>{i.is_active ? <StatusBadge status="confirmed" /> : <span className="badge neutral">inactive</span>}</td>
             </tr>))}</tbody>
         </table></div>)}
+      {filtered.length > shown && (
+        <div className="card-body row between"><span className="muted small">Showing {shown} of {filtered.length}. Search to narrow down.</span>
+          <Button variant="secondary" className="sm" onClick={() => setShown(shown + 200)}>Show more</Button></div>)}
     </Card>
   );
 }

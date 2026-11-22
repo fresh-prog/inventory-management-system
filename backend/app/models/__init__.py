@@ -15,3 +15,7 @@ from .inventory import (
 from .sync import InboxEvent, PurchaseAttachment, StoredFile, SyncState
 
 __all__ = [n for n in dir() if n[0].isupper()]
+
+# Change capture MUST be active wherever business data can be written: register it whenever the
+# models are loaded (not only when some web route happens to import it). See test_capture_always_on.
+from ..sync import capture as _capture  # noqa: E402,F401

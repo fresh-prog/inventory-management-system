@@ -62,9 +62,15 @@ class CloudClient:
     def call(self, method: str, path: str, *, json_body=None, content: bytes | None = None, params=None):
         full = "/api/v1/cloud-sync" + path
         body = content if content is not None else (json.dumps(json_body).encode() if json_body is not None else b"")
-        hdr = signing.headers(self.secret, self.bid, method, full, body)
+        gz = json_body is not None and len(body) > 1024
+        if gz:  # JSON row images compress ~8-10x: matters on slow restaurant internet links
+            import gzip
+            body = gzip.compress(body, compresslevel=6)
+        hdr = signing.headers(self.secret, self.bid, method, full, body)  # signature covers the bytes sent
         if json_body is not None:
             hdr["Content-Type"] = "application/json"
+        if gz:
+            hdr["Content-Encoding"] = "gzip"
         try:
             r = self.http.request(method, self.base + full, content=body, headers=hdr, params=params)
         except httpx.HTTPError as e:
@@ -193,7 +199,19 @@ def push(SessionMaker, client: CloudClient, max_batches: int = 50) -> dict:
             batch = db.scalars(select(OutboxEvent).where(OutboxEvent.status.in_(["pending", "retry", "failed"]))
                                .order_by(OutboxEvent.sequence).limit(batch_size)).all()
             batch = batch[:next((i for i, e in enumerate(batch) if e.status == "failed"), len(batch))]
-            body = {"events": [_event_json(e) for e in batch], "status": queue_status(db)}
+            pending_before = len(batch)
+            # bound each request by size as well as count (snapshot chunks are large): in order,
+            # always at least one event, at most sync_max_batch_bytes (default 2 MB)
+            events, size = [], 0
+            for e in batch:
+                ej = _event_json(e)
+                n = len(json.dumps(ej))
+                if events and size + n > get_settings().sync_max_batch_bytes:
+                    break
+                events.append(ej)
+                size += n
+            batch = batch[:len(events)]
+            body = {"events": events, "status": queue_status(db)}
             ids = [e.id for e in batch]
         try:
             resp = client.call("POST", "/events", json_body=body)
@@ -214,7 +232,7 @@ def push(SessionMaker, client: CloudClient, max_batches: int = 50) -> dict:
                     db.get(SyncState, 1).halted_reason = stopped.get("detail")
                     db.commit()
             break
-        if len(ids) < batch_size:
+        if len(ids) < batch_size and len(ids) == pending_before:
             break
     return {"sent": sent, "acked": acked, "stopped": stopped}
 

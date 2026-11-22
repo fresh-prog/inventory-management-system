@@ -37,6 +37,7 @@ function Levels() {
   const [params, setParams] = useSearchParams();
   const filter = params.get("filter") || "";
   const [search, setSearch] = useState("");
+  const [shown, setShown] = useState(100);  // incremental rendering: thousands of rows stay fast on phones
   const q = useQuery({ queryKey: ["stock"], queryFn: () => get("/stock") });
   const nav = useNavigate();
   if (q.isLoading) return <Loading />;
@@ -58,14 +59,17 @@ function Levels() {
           <label className="check"><input type="checkbox" checked={filter === "low"} onChange={(e) => setParams(e.target.checked ? { tab: "levels", filter: "low" } : { tab: "levels" })} /> Low stock only</label></div></div>
         {rows.length === 0 ? <Empty title="Nothing to show" /> : (
           <div className="table-wrap"><table><thead><tr><th>Ingredient</th><th className="num">On hand</th><th className="num hide-sm">Minimum</th><th className="num">Value</th><th className="num hide-sm">Batches</th><th>Status</th></tr></thead>
-            <tbody>{rows.map((r) => (
+            <tbody>{rows.slice(0, shown).map((r) => (
               <tr key={r.ingredient_id} className={`clickable ${r.is_out && num(r.min_stock_base) > 0 ? "out" : r.is_low ? "low" : ""}`} onClick={() => nav(`/ingredients/${r.ingredient_id}`)}>
                 <td><Link to={`/ingredients/${r.ingredient_id}`} onClick={(e) => e.stopPropagation()}>{r.name}</Link><div className="muted small">{r.category || ""}</div></td>
                 <td className="num"><strong>{qty(r.on_hand, r.display_unit)}</strong></td><td className="num hide-sm">{num(r.min_stock_base) > 0 ? qty(r.min_stock, r.display_unit) : "—"}</td>
                 <td className="num">{money(r.inventory_value)}</td><td className="num hide-sm">{r.open_batches}</td>
                 <td>{r.is_out ? <span className="badge bad">out of stock</span> : r.is_low ? <span className="badge warn">low</span> : <span className="badge good">ok</span>}</td></tr>))}</tbody>
-            <tfoot><tr><td>Total</td><td /><td className="hide-sm" /><td className="num">{money(rows.reduce((s, r) => s + num(r.inventory_value), 0))}</td><td className="hide-sm" /><td /></tr></tfoot>
+            <tfoot><tr><td>Total ({rows.length})</td><td /><td className="hide-sm" /><td className="num">{money(rows.reduce((s, r) => s + num(r.inventory_value), 0))}</td><td className="hide-sm" /><td /></tr></tfoot>
           </table></div>)}
+        {rows.length > shown && (
+          <div className="card-body row between"><span className="muted small">Showing {shown} of {rows.length}. Search or tick "Low stock only" to narrow down.</span>
+            <Button variant="secondary" className="sm" onClick={() => setShown(shown + 200)}>Show more</Button></div>)}
       </Card>
     </>
   );

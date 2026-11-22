@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..db import get_db
 from ..errors import BusinessRuleError, Conflict, NotFound, Unauthorized
-from ..jsonenc import enc
+from ..jsonenc import J, enc
 from ..models import Branch, User, UserBranchRole
 from ..schemas.inputs import BranchSettingsIn, LoginIn, SetupIn, UserIn, UserPatch
 from ..security import (
@@ -84,7 +84,7 @@ def logout_all(p: Principal = Depends(get_principal), db: Session = Depends(get_
 @router.get("/me")
 def me(p: Principal = Depends(get_principal)):
     b = p.branch
-    return enc({
+    return J({
         "user": {"id": p.user.id, "email": p.user.email, "display_name": p.user.display_name},
         "role": p.role, "permissions": sorted(p.permissions),
         "branch": {"id": b.id, "code": b.code, "name": b.name, "country": b.country,
@@ -113,7 +113,7 @@ def update_branch(body: BranchSettingsIn, if_match: int | None = Header(default=
 def list_users(p: Principal = Depends(require("user.manage")), db: Session = Depends(get_db)):
     rows = db.execute(select(User, UserBranchRole.role).join(UserBranchRole, UserBranchRole.user_id == User.id)
                       .where(UserBranchRole.branch_id == p.branch.id).order_by(User.display_name)).all()
-    return enc([{"id": u.id, "email": u.email, "display_name": u.display_name, "role": r,
+    return J([{"id": u.id, "email": u.email, "display_name": u.display_name, "role": r,
                  "is_active": u.is_active, "created_at": u.created_at} for u, r in rows])
 
 
@@ -127,7 +127,7 @@ def create_user(body: UserIn, p: Principal = Depends(require("user.manage")), db
     db.add(UserBranchRole(user_id=u.id, branch_id=p.branch.id, role=body.role))
     audit(db, p, "user.create", "app_user", u.id, {"email": u.email, "role": body.role})
     db.commit()
-    return enc({"id": u.id})
+    return J({"id": u.id}, 201)
 
 
 @router.patch("/users/{user_id}")

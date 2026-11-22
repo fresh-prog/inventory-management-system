@@ -654,3 +654,30 @@ def test_delete_and_reinsert_of_same_row_in_one_transaction_replicates(linked):
     L.owner.ok(L.owner.patch(f"/ingredients/{ing['id']}", {"suppliers": [{"supplier_id": s2["id"]}]}))
     drain(L)
     assert_converged(L.branch_engine, L.cloud_engine, L.schema)
+
+
+def test_batches_are_bounded_by_size_and_still_converge(linked, monkeypatch):
+    from app.config import get_settings
+    L = linked
+    for i in range(30):
+        make_ingredient(L.owner, f"SZ{i}", f"Size {i}")
+    monkeypatch.setattr(get_settings(), "sync_max_batch_bytes", 6000)  # force many small requests
+    monkeypatch.setattr("app.sync.client.SNAPSHOT_CHUNK", 20)
+    drain(L)
+    posts = [x for x in L.net.log if x[1].endswith("/events")]
+    assert len(posts) > 5
+    assert_converged(L.branch_engine, L.cloud_engine, L.schema)
+
+
+def test_compressed_batches_are_size_capped_against_zip_bombs(linked):
+    import gzip
+    from app.sync import signing
+    L = linked
+    with L.S() as db:
+        st = db.get(SyncState, 1)
+        secret, bid = st.branch_secret, str(st.cloud_branch_id)
+    bomb = gzip.compress(b"0" * (100 * 1024 * 1024))  # ~100 KB on the wire, 100 MB expanded
+    path = "/api/v1/cloud-sync/events"
+    h = {**signing.headers(secret, bid, "POST", path, bomb), "Content-Encoding": "gzip", "Content-Type": "application/json"}
+    r = httpx.post(L.cloud.base + path, content=bomb, headers=h, timeout=60)
+    assert r.status_code == 422 and "too large" in r.json()["detail"]

@@ -2,6 +2,7 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_call:
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -19,7 +20,17 @@ jobs:
       - run: createdb -h localhost -U app restaurant_cloud_test
         env: { PGPASSWORD: app }
       - working-directory: backend
-        run: pip install -r requirements.txt pytest httpx && python -m pytest -q -p no:logging
+        run: pip install -r requirements.txt pytest pip-audit
+      - name: Dependency vulnerabilities (fails on any known CVE)
+        working-directory: backend
+        run: pip-audit -r requirements.txt
+      - name: Migrations match the models
+        working-directory: backend
+        run: alembic upgrade head && alembic check
+        env: { APP_DATABASE_URL: "postgresql+psycopg://app:app@localhost:5432/restaurant_test" }
+      - name: Tests (unit, API, sync, security, integrity, recovery, migrations)
+        working-directory: backend
+        run: python -m pytest -q -p no:logging
         env:
           APP_DATABASE_URL: postgresql+psycopg://app:app@localhost:5432/restaurant_test
           APP_CLOUD_TEST_DATABASE_URL: postgresql+psycopg://app:app@localhost:5432/restaurant_cloud_test
@@ -30,4 +41,16 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
       - working-directory: frontend
-        run: npm ci && npm run typecheck && npm test && npm run build
+        run: npm ci && npm audit --audit-level=moderate && npm run typecheck && npm test && npm run build
+  image:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --build-arg VERSION=$(cat VERSION)-ci -t kitchenledger:ci .
+      - run: docker build -f deploy/backup/Dockerfile -t kitchenledger-backup:ci .
+      - name: Image starts and serves its version
+        run: |
+          docker run -d --name kl -e APP_ENV=test -p 8000:8000 kitchenledger:ci sh -c "exec uvicorn app.main:app --host 0.0.0.0 --port 8000"
+          for i in $(seq 1 30); do curl -fs localhost:8000/api/v1/health/live && break; sleep 1; done
+          curl -fs localhost:8000/api/v1/health/live | grep -q "$(cat VERSION)-ci"

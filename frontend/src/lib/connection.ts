@@ -1,9 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-export type Health = { status: string; database: string; disk: string; disk_free_percent: number; mode: string;
-  sync_pending_events: number; sync_failed_events: number; cloud_registered: boolean;
-  cloud_last_success_at: string | null; cloud_last_error: string | null; sync_halted: string | null };
+import { get } from "./api";
+
+export type Health = { status: string; database: string; disk: string; disk_free_percent: number; mode: string; version: string };
+export type SyncStatus = { state: string; registered: boolean; last_success_at: string | null; last_error: string | null;
+  halted_reason: string | null; pending_events: number; queue: { pending: number; retry: number; failed: number; files_pending: number } };
+
+/** Cloud synchronisation details (authenticated; never exposed on the public health check). */
+export function useSyncStatus(enabled = true) {
+  return useQuery<SyncStatus>({ queryKey: ["sync-status"], queryFn: () => get("/sync/status"), refetchInterval: 15000,
+                                retry: false, staleTime: 10000, enabled });
+}
 
 /** Connection to the LOCAL branch server (not the internet). The app works without internet. */
 export function useConnection() {

@@ -1,0 +1,51 @@
+# Release pipeline: tag vX.Y.Z → build & publish image → staging (smoke tests) → production (manual approval).
+# Configure GitHub Environments "staging" and "production" (Settings → Environments) with required
+# reviewers on production and the secrets used below. Nothing reaches production untested.
+name: Release
+on:
+  push:
+    tags: ["v*.*.*"]
+permissions:
+  contents: read
+  packages: write
+jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    outputs: { version: "${{ steps.v.outputs.version }}" }
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: |
+          v="${GITHUB_REF_NAME#v}"; test "$v" = "$(cat VERSION)" || { echo "tag $v != VERSION $(cat VERSION)"; exit 1; }
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      - run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - run: |
+          img=ghcr.io/${{ github.repository }}
+          docker build --build-arg VERSION=${{ steps.v.outputs.version }} -t $img:${{ steps.v.outputs.version }} .
+          docker push $img:${{ steps.v.outputs.version }}
+  staging:
+    needs: publish
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Deploy to staging (backup → pull → migrate → health, auto-rollback)
+        run: |
+          echo "${{ secrets.STAGING_SSH_KEY }}" > key && chmod 600 key
+          ssh -i key -o StrictHostKeyChecking=accept-new ${{ secrets.STAGING_SSH_TARGET }} \
+            "cd /opt/kitchenledger && git fetch --tags && git checkout v${{ needs.publish.outputs.version }} && scripts/deploy/deploy.sh ${{ needs.publish.outputs.version }}"
+      - name: Smoke tests against staging
+        run: |
+          curl -fsk ${{ secrets.STAGING_URL }}/api/v1/health/ready
+          curl -fsk ${{ secrets.STAGING_URL }}/api/v1/health/live | grep -q '"${{ needs.publish.outputs.version }}"'
+  production:
+    needs: [publish, staging]
+    runs-on: ubuntu-latest
+    environment: production   # requires approval by a named reviewer
+    steps:
+      - run: |
+          echo "${{ secrets.PROD_SSH_KEY }}" > key && chmod 600 key
+          ssh -i key -o StrictHostKeyChecking=accept-new ${{ secrets.PROD_SSH_TARGET }} \
+            "cd /opt/kitchenledger && git fetch --tags && git checkout v${{ needs.publish.outputs.version }} && scripts/deploy/deploy.sh ${{ needs.publish.outputs.version }}"

@@ -8,7 +8,9 @@ RUN npm run build
 
 # ── API + static files ──
 FROM python:3.12-slim
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 APP_FRONTEND_DIST=/app/web APP_FILES_DIR=/data/files
+ARG VERSION=dev
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 APP_FRONTEND_DIST=/app/web APP_FILES_DIR=/data/files \
+    APP_APP_VERSION=$VERSION FORWARDED_ALLOW_IPS=*
 RUN apt-get update \
     && apt-get install -y --no-install-recommends openssl \
     && apt-get clean \
@@ -22,6 +24,7 @@ COPY scripts/ ./scripts/
 COPY --from=web /web/dist ./web
 USER app
 EXPOSE 8000
+LABEL org.opencontainers.image.version=$VERSION
 HEALTHCHECK --interval=30s --timeout=5s CMD python -c "import urllib.request;urllib.request.urlopen('http://localhost:8000/api/v1/health/live')"
 # Migrations run on start (forward-only). Take a backup before upgrading — see docs/INSTALL.md.
-CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers"]
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${APP_WORKERS:-4} --proxy-headers"]

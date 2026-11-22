@@ -1,0 +1,5 @@
+initial snapshot: 374,175 rows in 749 parts, 227.5 MB sent, 476.4 s (unthrottled LAN) → at 2 Mbit/s ≈ 15 min
+offline: recorded 4,672 transactions in 93 s with the cloud unreachable
+backlog while offline: {'pending': 4671, 'retry': 1, 'failed': 0, 'acked': 749, 'superseded': 49772, 'oldest_unsent_at': '2026-11-22T01:26:57.726183+00:00', 'files_pending': 0}
+backlog drained over a 2.0 Mbit/s link: 4,672 events, 19.4 MB in 145 s (32 events/s)
+convergence: 396,039 rows compared in 25 s → IDENTICAL

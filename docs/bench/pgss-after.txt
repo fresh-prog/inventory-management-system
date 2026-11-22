@@ -1,0 +1,10 @@
+ calls | total_s | mean_ms |                                                     query                                                      
+-------+---------+---------+----------------------------------------------------------------------------------------------------------------
+   238 |     7.6 |    32.0 | SELECT ingredient.id, ingredient.code, ingredient.name, ingredient.base_dimension, ingredient.consumption_unit
+   129 |     5.2 |    40.0 | SELECT anon_1.id, anon_1.invoice_ref, anon_1.supplier_id, anon_1.supplier_name, anon_1.invoice_date, anon_1.du
+   537 |     3.1 |     5.9 | SELECT pg_advisory_xact_lock($1)
+   102 |     2.9 |    28.4 | SELECT ingredient_price_history.id, ingredient_price_history.ingredient_id, ingredient_price_history.branch_id
+   102 |     2.8 |    27.4 | SELECT stock_movement.type, stock_movement.reason, sum(-stock_movement.total_cost) AS sum_1 FROM stock_movemen
+   256 |     2.6 |    10.0 | SELECT coalesce(sum(stock_batch.remaining_quantity * stock_batch.unit_cost), $1::INTEGER) AS coalesce_1 FROM s
+(6 rows)
+

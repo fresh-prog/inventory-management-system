@@ -1,0 +1,47 @@
+# Prometheus alert rules for KitchenLedger (branch servers and cloud).
+groups:
+  - name: kitchenledger
+    rules:
+      - alert: DatabaseDown
+        expr: kl_database_up == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: "Database unreachable on {{ $labels.instance }} — the restaurant cannot save anything"}
+      - alert: InstanceDown
+        expr: up{job="kitchenledger"} == 0
+        for: 5m
+        labels: {severity: critical}
+        annotations: {summary: "{{ $labels.instance }} not responding"}
+      - alert: DiskAlmostFull
+        expr: kl_disk_free_ratio < 0.10
+        for: 10m
+        labels: {severity: warning}
+        annotations: {summary: "Less than 10% disk free on {{ $labels.instance }}"}
+      - alert: DiskCritical
+        expr: kl_disk_free_ratio < 0.03
+        labels: {severity: critical}
+        annotations: {summary: "Disk nearly full on {{ $labels.instance }}: new receipts are refused"}
+      - alert: BackupMissing
+        expr: kl_last_backup_age_seconds > 26 * 3600 or kl_last_backup_age_seconds < 0
+        for: 30m
+        labels: {severity: critical}
+        annotations: {summary: "No successful backup in the last 26 hours on {{ $labels.instance }}"}
+      - alert: SyncRejected
+        expr: kl_sync_events{status="failed"} > 0
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: "A change was rejected by the cloud; later changes are waiting (runbook: Blocked)"}
+      - alert: SyncHalted
+        expr: kl_sync_halted == 1 or kl_branch_halted == 1
+        labels: {severity: critical}
+        annotations: {summary: "Synchronisation halted (sequence regression) — follow SYNC-RUNBOOK §2.2"}
+      - alert: SyncBacklogOld
+        expr: kl_sync_registered == 1 and kl_sync_oldest_unsent_seconds > 24 * 3600
+        for: 1h
+        labels: {severity: warning}
+        annotations: {summary: "Changes waiting more than 24 h for the cloud (internet or cloud problem)"}
+      - alert: BranchNotSeen
+        expr: kl_branch_last_seen_seconds > 6 * 3600
+        for: 30m
+        labels: {severity: warning}
+        annotations: {summary: "Branch {{ $labels.branch }} has not contacted the cloud for 6 h"}

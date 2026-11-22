@@ -60,6 +60,9 @@ def create_app(settings: Settings | None = None, database_url: str | None = None
         for r in (auth, devices, ingredients, recipes, suppliers, purchases, files, stock, reports, sync_admin):
             api.include_router(r.router)
 
+    from .api import metrics
+    api.include_router(metrics.router)
+
     @api.get("/profile", tags=["ops"])
     def get_profile():
         return {"profile": profile}

@@ -1,0 +1,87 @@
+{
+ "dashboard": {
+  "median_ms": 215.1,
+  "max_ms": 357.0,
+  "bytes": 217175
+ },
+ "stock levels (3,000 items)": {
+  "median_ms": 110.1,
+  "max_ms": 123.8,
+  "bytes": 1231397
+ },
+ "ingredients (all 3,000)": {
+  "median_ms": 270.7,
+  "max_ms": 292.2,
+  "bytes": 1501604
+ },
+ "ingredient search": {
+  "median_ms": 19.4,
+  "max_ms": 23.2,
+  "bytes": 25064
+ },
+ "purchases page 1": {
+  "median_ms": 47.2,
+  "max_ms": 49.6,
+  "bytes": 17545
+ },
+ "purchases page 100": {
+  "median_ms": 50.4,
+  "max_ms": 58.4,
+  "bytes": 17714
+ },
+ "purchases unpaid filter": {
+  "median_ms": 60.5,
+  "max_ms": 64.1,
+  "bytes": 17544
+ },
+ "purchase detail": {
+  "median_ms": 13.5,
+  "max_ms": 20.4,
+  "bytes": 1785
+ },
+ "supplier file (~170 invoices)": {
+  "median_ms": 74.6,
+  "max_ms": 84.1,
+  "bytes": 118491
+ },
+ "recipes list (300, costed)": {
+  "median_ms": 32.0,
+  "max_ms": 97.5,
+  "bytes": 110506
+ },
+ "recipe detail": {
+  "median_ms": 20.1,
+  "max_ms": 25.8,
+  "bytes": 9623
+ },
+ "recipe cost history": {
+  "median_ms": 10.1,
+  "max_ms": 12.9,
+  "bytes": 83192
+ },
+ "ingredient batches": {
+  "median_ms": 16.4,
+  "max_ms": 20.9,
+  "bytes": 3869
+ },
+ "movements page": {
+  "median_ms": 17.2,
+  "max_ms": 24.8,
+  "bytes": 60840
+ },
+ "valuation report": {
+  "median_ms": 104.5,
+  "max_ms": 149.1,
+  "bytes": 1231440
+ },
+ "consumption report (year)": {
+  "median_ms": 33.3,
+  "max_ms": 35.8,
+  "bytes": 229
+ },
+ "integrity check (all records)": {
+  "median_ms": 114.7,
+  "max_ms": 172.2,
+  "bytes": 509
+ }
+}

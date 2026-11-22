@@ -88,7 +88,7 @@ class IngredientPriceHistory(Base):
     branch_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("branch.id"))
     source: Mapped[str] = mapped_column(String(16))  # purchase | manual
     supplier_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("supplier.id"))
-    purchase_line_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("purchase_line.id"))
+    purchase_line_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("purchase_line.id"), index=True)
     effective_date: Mapped[date] = mapped_column(Date)
     purchase_quantity: Mapped[Decimal] = mapped_column(Qty)
     purchase_unit: Mapped[str] = mapped_column(String(8))
@@ -108,6 +108,6 @@ class IngredientPriceHistory(Base):
 class SupplierIngredient(Base):
     __tablename__ = "supplier_ingredient"
     supplier_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("supplier.id"), primary_key=True)
-    ingredient_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("ingredient.id"), primary_key=True)
+    ingredient_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("ingredient.id"), primary_key=True, index=True)
     supplier_sku: Mapped[str | None] = mapped_column(String(60))
     is_preferred: Mapped[bool] = mapped_column(Boolean, default=False)

@@ -179,3 +179,29 @@ def test_history_tables_are_append_only(owner, engine):
         with pytest.raises(Exception, match="append-only"):
             with engine.begin() as c:
                 c.execute(text(stmt))
+
+
+def test_purchase_list_filters_and_paginates_in_sql_consistently(owner):
+    sup = make_supplier(owner)
+    other = make_supplier(owner, "OTH", "Other")
+    ing = make_ingredient(owner)
+    invs = [buy(owner, (sup if i % 2 else other)["id"], [(ing["id"], 1, "kg", 10 + i)], ref=f"P{i:02d}",
+                day=f"2026-01-{i + 1:02d}") for i in range(12)]
+    owner.ok(pay(owner, sup["id"], [(invs[1]["id"], 5)], 5))                       # partially paid
+    owner.ok(pay(owner, sup["id"], [(invs[3]["id"], invs[3]["total"])], invs[3]["total"]))  # paid
+    owner.ok(owner.post(f"/purchases/{invs[4]['id']}/void", {"reason": "dup entry"}))
+    full = owner.ok(owner.get("/purchases", params={"limit": 200}))
+    assert full["total"] == 12 and [x["invoice_ref"] for x in full["items"]][:2] == ["P11", "P10"]
+    by_id = {x["id"]: x for x in full["items"]}
+    for inv in invs:  # list figures == detail figures
+        d = owner.ok(owner.get(f"/purchases/{inv['id']}"))
+        row = by_id[inv["id"]]
+        assert (row["outstanding"], row["payment_status"], row["amount_paid"]) == (d["outstanding"], d["payment_status"], d["amount_paid"])
+        assert row["line_count"] == 1 and row["supplier_name"] == d["supplier_name"]
+    page = owner.ok(owner.get("/purchases", params={"limit": 5, "offset": 5}))
+    assert [x["id"] for x in page["items"]] == [x["id"] for x in full["items"][5:10]] and page["total"] == 12
+    assert {x["invoice_ref"] for x in owner.ok(owner.get("/purchases", params={"payment_status": "paid"}))["items"]} == {"P03"}
+    assert {x["invoice_ref"] for x in owner.ok(owner.get("/purchases", params={"payment_status": "partially_paid"}))["items"]} == {"P01"}
+    assert owner.ok(owner.get("/purchases", params={"payment_status": "voided"}))["total"] == 1
+    assert owner.ok(owner.get("/purchases", params={"supplier_id": sup["id"]}))["total"] == 6
+    assert owner.ok(owner.get("/purchases", params={"date_from": "2026-01-10"}))["total"] == 3

@@ -3,13 +3,18 @@ checksum-verified transfer handled by the sync worker."""
 
 import hashlib
 import os
+import shutil
 import uuid
 from pathlib import Path
 
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..errors import BusinessRuleError, NotFound
+from ..errors import AppError, BusinessRuleError, NotFound
+
+
+class StorageFull(AppError):
+    status, code, title = 507, "STORAGE_FULL", "Storage full"
 from ..models import PurchaseAttachment, StoredFile
 from ..security import Principal
 from .platform import audit, emit
@@ -59,17 +64,31 @@ def store(db: Session, p: Principal, data: bytes, original_name: str) -> StoredF
     key = f"{p.branch.id}/{digest[:2]}/{fid}{ext}"
     dest = files_root() / key
     dest.parent.mkdir(parents=True, exist_ok=True)
+    reserve = get_settings().min_free_mb * 1024 * 1024
+    if shutil.disk_usage(files_root()).free - len(data) < reserve:
+        raise StorageFull("The server is almost out of disk space, so the document was not saved. "
+                          "Ask the administrator to free space (the database needs it too).")
     tmp = dest.with_suffix(dest.suffix + ".part")
-    with open(tmp, "wb") as fh:
-        fh.write(data)
-        fh.flush()
-        os.fsync(fh.fileno())
-    os.replace(tmp, dest)  # atomic: a crash never leaves a half-written file under its final name
+    try:
+        with open(tmp, "wb") as fh:
+            fh.write(data)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, dest)  # atomic: a crash never leaves a half-written file under its final name
+    except OSError as e:
+        tmp.unlink(missing_ok=True)
+        if e.errno == 28:
+            raise StorageFull("The server's disk is full, so the document was not saved.") from e
+        raise
     f = StoredFile(id=fid, branch_id=p.branch.id, original_name=(original_name or "upload")[:200], mime_type=mime,
                    size_bytes=len(data), sha256=digest, storage_key=key, uploaded_by=p.user.id,
                    device_id=p.device.id if p.device else None)
-    db.add(f)
-    db.flush()
+    try:
+        db.add(f)
+        db.flush()
+    except Exception:
+        dest.unlink(missing_ok=True)  # never leave a file without its record
+        raise
     return f
 
 

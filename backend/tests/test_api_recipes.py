@@ -81,3 +81,23 @@ def test_cost_preview_writes_nothing(owner):
                                                       "lines": [{"ingredient_id": ing["id"], "quantity": "1", "unit": "kg"}]}))
     assert c["cost_per_portion"] == "2.5000"
     assert owner.ok(owner.get("/recipes")) == []
+
+
+def test_recipe_list_cost_equals_live_cost_including_conversion_changes(owner):
+    """The list shows the latest snapshot; it must always equal a live re-costing."""
+    oil = make_ingredient(owner, "OIL", "Oil", "mass", "l", "g",
+                          conversions=[{"from_unit": "l", "from_qty": "1", "to_unit": "g", "to_qty": "900"}],
+                          reference_price={"quantity": "1", "unit": "kg", "amount": "9", "effective_date": "2026-01-01"})
+    r = owner.ok(owner.post("/recipes", {"code": "FRY", "name": "Fry", "version": {
+        "portions_per_batch": "2", "selling_price": "10", "lines": [{"ingredient_id": oil["id"], "quantity": "1", "unit": "l"}]}}))
+    owner.ok(owner.post(f"/recipes/{r['id']}/versions/1/publish"))
+
+    def listed():
+        return next(x for x in owner.ok(owner.get("/recipes")) if x["id"] == r["id"])["cost_per_portion"]
+
+    def live():
+        return owner.ok(owner.get(f"/recipes/{r['id']}"))["cost"]["cost_per_portion"]
+    assert listed() == live() == "4.0500"   # 900 g * 0.009 / 2
+    owner.ok(owner.patch(f"/ingredients/{oil['id']}", {"conversions": [
+        {"from_unit": "l", "from_qty": "1", "to_unit": "g", "to_qty": "920"}]}))
+    assert listed() == live() == "4.1400"   # 920 g * 0.009 / 2 — re-costed by the conversion change

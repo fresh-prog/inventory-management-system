@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Restaurant Costing, Purchasing & FIFO Inventory API",
-  "version": "0.2.0"
+  "version": "0.4.0"
  },
  "paths": {
   "/api/v1/setup/status": {
@@ -835,7 +835,8 @@
       "schema": {
        "anyOf": [
         {
-         "type": "string"
+         "type": "string",
+         "maxLength": 100
         },
         {
          "type": "null"
@@ -866,7 +867,8 @@
       "required": false,
       "schema": {
        "type": "integer",
-       "maximum": 500,
+       "maximum": 5000,
+       "minimum": 1,
        "default": 200,
        "title": "Limit"
       }
@@ -1340,6 +1342,7 @@
      "recipes"
     ],
     "summary": "List Recipes",
+    "description": "Costs come from each published version's latest cost snapshot, which is re-computed on every\ningredient price/conversion change and on publish \u2014 so it IS the current cost, without\nre-costing hundreds of recipes on every request.",
     "operationId": "list_recipes_api_v1_recipes_get",
     "parameters": [
      {
@@ -2334,6 +2337,7 @@
      "purchases & payments"
     ],
     "summary": "List Purchases",
+    "description": "Filtering, payment status and pagination are computed in SQL: only one page is loaded.",
     "operationId": "list_purchases_api_v1_purchases_get",
     "parameters": [
      {
@@ -2426,6 +2430,7 @@
       "schema": {
        "type": "integer",
        "maximum": 200,
+       "minimum": 1,
        "default": 50,
        "title": "Limit"
       }
@@ -2436,6 +2441,7 @@
       "required": false,
       "schema": {
        "type": "integer",
+       "minimum": 0,
        "default": 0,
        "title": "Offset"
       }
@@ -5632,7 +5638,7 @@
     "properties": {
      "file": {
       "type": "string",
-      "format": "binary",
+      "contentMediaType": "application/octet-stream",
       "title": "File"
      }
     },
@@ -5674,7 +5680,8 @@
      "name": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -5694,13 +5701,15 @@
        "$ref": "#/components/schemas/QtyLineIn"
       },
       "type": "array",
+      "maxItems": 200,
       "minItems": 1,
       "title": "Lines"
      },
      "note": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -5728,7 +5737,8 @@
      "override_reason": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -5795,7 +5805,8 @@
      "note": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -5863,6 +5874,7 @@
        "$ref": "#/components/schemas/CountEntryIn"
       },
       "type": "array",
+      "maxItems": 5000,
       "title": "Lines"
      }
     },
@@ -5878,7 +5890,8 @@
      "note": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -5893,7 +5906,8 @@
          "type": "string",
          "format": "uuid"
         },
-        "type": "array"
+        "type": "array",
+        "maxItems": 5000
        },
        {
         "type": "null"
@@ -5934,7 +5948,8 @@
      "reference": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -6022,7 +6037,8 @@
      "description": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -6104,6 +6120,7 @@
        "$ref": "#/components/schemas/ConversionIn"
       },
       "type": "array",
+      "maxItems": 20,
       "title": "Conversions",
       "default": []
      },
@@ -6112,6 +6129,7 @@
        "$ref": "#/components/schemas/SupplierLinkIn"
       },
       "type": "array",
+      "maxItems": 100,
       "title": "Suppliers",
       "default": []
      },
@@ -6168,7 +6186,8 @@
      "category": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -6179,7 +6198,8 @@
      "description": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -6289,7 +6309,8 @@
         "items": {
          "$ref": "#/components/schemas/ConversionIn"
         },
-        "type": "array"
+        "type": "array",
+        "maxItems": 20
        },
        {
         "type": "null"
@@ -6303,7 +6324,8 @@
         "items": {
          "$ref": "#/components/schemas/SupplierLinkIn"
         },
-        "type": "array"
+        "type": "array",
+        "maxItems": 100
        },
        {
         "type": "null"
@@ -6333,7 +6355,8 @@
      "branch_code": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -6401,7 +6424,8 @@
      "notes": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -6414,6 +6438,7 @@
        "$ref": "#/components/schemas/AllocationIn"
       },
       "type": "array",
+      "maxItems": 200,
       "minItems": 1,
       "title": "Allocations"
      }
@@ -6555,7 +6580,8 @@
      "note": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -6583,7 +6609,8 @@
      "override_reason": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -6697,7 +6724,8 @@
      "notes": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -6969,7 +6997,8 @@
      "prep_instructions": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -6980,7 +7009,8 @@
      "cooking_instructions": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -7005,13 +7035,15 @@
        "$ref": "#/components/schemas/RecipeLineIn"
       },
       "type": "array",
+      "maxItems": 200,
       "minItems": 1,
       "title": "Lines"
      },
      "name": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -7022,7 +7054,8 @@
      "category": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -7057,7 +7090,8 @@
      "category": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -7236,7 +7270,8 @@
      "prep_instructions": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -7247,7 +7282,8 @@
      "cooking_instructions": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -7272,6 +7308,7 @@
        "$ref": "#/components/schemas/RecipeLineIn"
       },
       "type": "array",
+      "maxItems": 200,
       "minItems": 1,
       "title": "Lines"
      }
@@ -7342,6 +7379,7 @@
      },
      "timezone": {
       "type": "string",
+      "maxLength": 4000,
       "title": "Timezone",
       "default": "Africa/Kampala"
      },
@@ -7353,6 +7391,7 @@
      },
      "owner_email": {
       "type": "string",
+      "maxLength": 4000,
       "format": "email",
       "title": "Owner Email"
      },
@@ -7394,7 +7433,8 @@
      "tax_id": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -7405,7 +7445,8 @@
      "contact_person": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -7416,7 +7457,8 @@
      "phone": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -7428,6 +7470,7 @@
       "anyOf": [
        {
         "type": "string",
+        "maxLength": 4000,
         "format": "email"
        },
        {
@@ -7439,7 +7482,8 @@
      "address": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -7463,7 +7507,8 @@
      "notes": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 2000
        },
        {
         "type": "null"
@@ -7495,7 +7540,8 @@
      "supplier_sku": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -7520,6 +7566,7 @@
     "properties": {
      "email": {
       "type": "string",
+      "maxLength": 4000,
       "format": "email",
       "title": "Email"
      },
@@ -7562,7 +7609,8 @@
      "display_name": {
       "anyOf": [
        {
-        "type": "string"
+        "type": "string",
+        "maxLength": 4000
        },
        {
         "type": "null"
@@ -7640,6 +7688,13 @@
      "type": {
       "type": "string",
       "title": "Error Type"
+     },
+     "input": {
+      "title": "Input"
+     },
+     "ctx": {
+      "type": "object",
+      "title": "Context"
      }
     },
     "type": "object",

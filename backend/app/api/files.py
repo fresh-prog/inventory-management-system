@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..db import get_db
 from ..errors import BusinessRuleError, NotFound
-from ..jsonenc import enc
+from ..jsonenc import J, enc
 from ..models import PurchaseAttachment, StoredFile
 from ..security import Principal, require
 from ..services import files as svc
@@ -31,8 +31,12 @@ async def upload(purchase_id: uuid.UUID, file: UploadFile = File(...),
     if len(data) > limit:
         raise BusinessRuleError(f"The file is larger than {get_settings().max_upload_mb} MB")
     f = svc.attach_to_purchase(db, p, purchase_id, data, file.filename or "receipt")
-    db.commit()
-    return enc(file_out(f))
+    try:
+        db.commit()
+    except Exception:
+        svc.path_for(f).unlink(missing_ok=True)  # no orphan file if the database refused the record
+        raise
+    return J(file_out(f), 201)
 
 
 @router.get("/purchases/{purchase_id}/attachments")
@@ -41,7 +45,7 @@ def list_attachments(purchase_id: uuid.UUID, p: Principal = Depends(require("pur
     rows = db.scalars(select(StoredFile).join(PurchaseAttachment, PurchaseAttachment.file_id == StoredFile.id)
                       .where(PurchaseAttachment.purchase_id == purchase_id, StoredFile.branch_id == p.branch.id)
                       .order_by(StoredFile.created_at)).all()
-    return enc([file_out(f) for f in rows])
+    return J([file_out(f) for f in rows])
 
 
 @router.get("/files/{file_id}")

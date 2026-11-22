@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..errors import NotFound
-from ..jsonenc import enc
+from ..jsonenc import J, enc
 from ..models import Device, User
 from ..security import Principal, get_principal, require
 from ..services.common import now
@@ -30,14 +30,14 @@ def register(body: DeviceIn, p: Principal = Depends(get_principal), db: Session 
     db.flush()
     audit(db, p, "device.register", "device", d.id, {"name": d.name})
     db.commit()
-    return enc({"id": d.id, "name": d.name})
+    return J({"id": d.id, "name": d.name}, 201)
 
 
 @router.get("")
 def list_devices(p: Principal = Depends(require("settings.manage")), db: Session = Depends(get_db)):
     rows = db.execute(select(Device, User.display_name).outerjoin(User, User.id == Device.registered_by)
                       .where(Device.branch_id == p.branch.id).order_by(Device.created_at.desc())).all()
-    return enc([{"id": d.id, "name": d.name, "user_agent": d.user_agent, "registered_by": who,
+    return J([{"id": d.id, "name": d.name, "user_agent": d.user_agent, "registered_by": who,
                  "created_at": d.created_at, "revoked_at": d.revoked_at,
                  "is_current": p.device is not None and p.device.id == d.id} for d, who in rows])
 

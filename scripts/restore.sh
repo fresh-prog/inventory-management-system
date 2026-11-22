@@ -16,5 +16,7 @@ if psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$TARGET'" | g
   echo "Database $TARGET already exists — choose a new name." >&2; exit 1
 fi
 createdb "$TARGET"
-pg_restore --no-owner --exit-on-error --dbname="$TARGET" "$FILE"
+pg_restore -l "$FILE" | grep -vE "EXTENSION - (pg_stat_statements|amcheck)|COMMENT - EXTENSION (pg_stat_statements|amcheck)" > "$FILE.toc"
+pg_restore --no-owner --exit-on-error -L "$FILE.toc" --dbname="$TARGET" "$FILE"
+rm -f "$FILE.toc"
 echo "Restored into $TARGET"

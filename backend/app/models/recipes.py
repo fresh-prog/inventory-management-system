@@ -62,8 +62,8 @@ class RecipeLine(Base):
     __tablename__ = "recipe_line"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid7)
     recipe_version_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("recipe_version.id", ondelete="CASCADE"))
-    ingredient_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("ingredient.id"))
+        ForeignKey("recipe_version.id", ondelete="CASCADE"), index=True)
+    ingredient_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("ingredient.id"), index=True)  # re-costing lookup
     quantity: Mapped[Decimal] = mapped_column(Qty)
     unit: Mapped[str] = mapped_column(String(8))
     basis: Mapped[str] = mapped_column(String(5), default="gross")

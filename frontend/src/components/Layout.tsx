@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../lib/auth";
-import { useConnection } from "../lib/connection";
+import { useConnection, useSyncStatus } from "../lib/connection";
 
 const I = {
   dash: "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
@@ -30,7 +30,7 @@ function ago(iso: string | null | undefined): string {
 
 export function SyncIndicator() {
   const c = useConnection();
-  const h = c.health;
+  const st = useSyncStatus(c.serverReachable);
   if (!c.serverReachable && !c.checking) {
     return (
       <Link to="/settings?tab=sync" className="sync bad" title="This device cannot reach the restaurant server. Entries are kept as drafts on this device and nothing is posted until the connection returns.">
@@ -38,22 +38,23 @@ export function SyncIndicator() {
       </Link>
     );
   }
-  if (!h) return null;
-  const pending = h.sync_pending_events ?? 0;
+  const s = st.data;
+  if (!s) return null;
+  const pending = s.pending_events + (s.queue?.files_pending ?? 0);
   let tone = "ok", label = "", title = "";
-  if (!h.cloud_registered) {
-    tone = "ok"; label = "Local server · cloud not set up";
+  if (!s.registered) {
+    label = "Saved on restaurant server · cloud not set up";
     title = "Everything is saved on the restaurant server. Cloud backup/sync has not been set up (Settings → Cloud sync).";
-  } else if (h.sync_halted || h.sync_failed_events) {
+  } else if (s.halted_reason || s.queue?.failed) {
     tone = "warn"; label = "Cloud sync needs attention";
-    title = h.sync_halted || "An event was rejected by the cloud. Open Settings → Cloud sync.";
+    title = s.halted_reason || "A change was rejected by the cloud. Open Settings → Cloud sync.";
   } else if (pending > 0) {
-    tone = h.cloud_last_error ? "warn" : "ok";
-    label = `${pending} change${pending === 1 ? "" : "s"} not yet in the cloud`;
-    title = `Saved on the restaurant server. Last successful cloud sync: ${ago(h.cloud_last_success_at)}.` +
-      (h.cloud_last_error ? ` Cloud unreachable: ${h.cloud_last_error}. Retrying automatically.` : "");
+    tone = s.last_error ? "warn" : "ok";
+    label = `Saved locally · ${pending} not yet in the cloud`;
+    title = `Saved on the restaurant server. Last successful cloud sync: ${ago(s.last_success_at)}.` +
+      (s.last_error ? ` Cloud unreachable: ${s.last_error}. Retrying automatically.` : "");
   } else {
-    label = `All changes synced · ${ago(h.cloud_last_success_at)}`;
+    label = `All changes in the cloud · ${ago(s.last_success_at)}`;
     title = "Every change on this server has been acknowledged by the cloud.";
   }
   return <Link to="/settings?tab=sync" className={`sync ${tone}`} title={title}><span className="dot" /> <span className="label">{label}</span></Link>;

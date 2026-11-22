@@ -52,6 +52,19 @@ export function BasisTag({ basis }: { basis: "fifo" | "current" }) {
   );
 }
 
+/** Where a saved record is: never claims "cloud" before the cloud's signed acknowledgement. */
+export function SyncBadge({ status }: { status?: string }) {
+  if (!status) return null;
+  const map: Record<string, [string, string, string]> = {
+    local: ["neutral", "Saved on server", "Saved on the restaurant server (cloud sync not set up)."],
+    pending: ["info", "Saved · cloud pending", "Saved on the restaurant server. Not yet confirmed by the cloud — it will be sent automatically."],
+    cloud: ["good", "In cloud ✓", "Saved on the restaurant server and confirmed by the cloud."],
+    attention: ["warn", "Cloud sync issue", "Saved on the restaurant server, but the cloud rejected it. See Settings → Cloud sync."],
+  };
+  const [tone, label, title] = map[status] || ["neutral", status, ""];
+  return <span className={`badge ${tone}`} title={title}>{label}</span>;
+}
+
 export function StatusBadge({ status }: { status: string }) {
   const tone = ({ paid: "good", partially_paid: "warn", unpaid: "bad", voided: "neutral", confirmed: "good",
                   published: "good", draft: "info", retired: "neutral", open: "info", approved: "good" } as any)[status] || "neutral";

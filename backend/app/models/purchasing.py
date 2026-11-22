@@ -59,6 +59,7 @@ class PurchaseInvoice(Base):
         Index("uq_supplier_invoice_confirmed", "supplier_id", "invoice_ref", unique=True,
               postgresql_where="status = 'confirmed'"),
         Index("ix_purchase_branch_date", "branch_id", "invoice_date"),
+        Index("ix_purchase_supplier_date", "supplier_id", "invoice_date"),  # supplier files
     )
 
 
@@ -67,7 +68,7 @@ class PurchaseLine(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid7)
     invoice_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("purchase_invoice.id"))
     line_no: Mapped[int] = mapped_column(Integer)
-    ingredient_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("ingredient.id"))
+    ingredient_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("ingredient.id"), index=True)
     description: Mapped[str | None] = mapped_column(String(200))
     quantity: Mapped[Decimal] = mapped_column(Qty)
     unit: Mapped[str] = mapped_column(String(8))

@@ -11,15 +11,25 @@ ingredient prices and recipe costs, and updates the supplier balance.
 
 ![Dashboard](docs/screenshots/02-dashboard.png)
 
-## Status — Stage 3: hybrid offline/online ✅
-* **Stage 2 (MVP):** costing, purchasing, suppliers, FIFO inventory, reports. All 14 acceptance criteria. [MVP report](docs/MVP-REPORT.md)
-* **Stage 3 (hybrid):**
-  * Each restaurant runs on its own server without internet.
-  * Every transaction is captured atomically into a durable outbox and synchronised to a cloud. The cloud keeps an isolated read replica per branch, with central reporting and monitoring, and two-factor remote access.
-  * Remote changes are executed by the branch, with explicit conflict rules; there is no last-write-wins.
-  * Receipts are stored locally, then uploaded resumably with checksum verification.
-  * 24 sync tests with real restarts, lost acknowledgements, interrupted uploads and database restores prove exact branch/cloud convergence.
-  * See the [sync test report](docs/SYNC-TEST-REPORT.md), [architecture](docs/SYNC-ARCHITECTURE.md) and [recovery runbook](docs/SYNC-RUNBOOK.md).
+## Status — v0.4.0, Stage 4: production hardening ✅ (pilot-ready, not yet general release)
+An adversarial audit found and fixed:
+* **3 critical defects:**
+  * sync records were silently missing for writes outside the web app;
+  * dependencies had known CVEs;
+  * backup verification ignored failures.
+* **8 high-severity defects**, plus medium ones. All are covered by tests or benchmarks.
+
+Evidence:
+* 130 backend tests, including a randomized model check of FIFO and ledgers, adversarial security tests, fault injection and recovery;
+* 0 known CVEs and 0 accessibility violations;
+* 5 of 5 real failure simulations;
+* benchmarks on a 263 MB restaurant: 25 concurrent staff within all response-time targets, and a 2 Mbit/s offline backlog that converges row for row.
+
+**[Production-readiness report](docs/PRODUCTION-READINESS.md)** (verdict and remaining gates) ·
+[Audit](docs/AUDIT.md) · [Security](docs/SECURITY.md) · [Performance](docs/PERFORMANCE.md) ·
+[Backup & DR](docs/DISASTER-RECOVERY.md) · [Deployment](docs/DEPLOYMENT.md) · [Changelog](CHANGELOG.md)
+
+Earlier stages: [MVP report](docs/MVP-REPORT.md) · [Sync test report](docs/SYNC-TEST-REPORT.md)
 
 | | |
 |---|---|

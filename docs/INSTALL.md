@@ -24,6 +24,16 @@ Paste the generated value into `.env` as `APP_JWT_SECRET`. Then create the datab
 ```bash
 openssl rand -base64 24 | tr -d '\n' > secrets/db_password.txt && chmod 600 secrets/db_password.txt
 ```
+Backups (scheduled by the `backup` service) need two more secrets: a pgpass line for the database and the
+**backup passphrase**. Store a copy of the passphrase OFF the server: without it, backups cannot be restored.
+```bash
+printf 'db:5432:restaurant:app:%s\n' "$(cat secrets/db_password.txt)" > secrets/pgpass && chmod 600 secrets/pgpass
+```
+```bash
+openssl rand -base64 32 > secrets/backup_passphrase.txt && chmod 600 secrets/backup_passphrase.txt
+```
+Mount a USB disk or network share for off-site copies and set `OFFSITE_PATH` in `.env` (see DISASTER-RECOVERY.md).
+Set `APP_METRICS_TOKEN` in `.env` to enable monitoring (DEPLOYMENT.md).
 ```bash
 docker compose up -d --build
 ```

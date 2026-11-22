@@ -8,7 +8,7 @@
   --brand: #0f5132;
   --brand-600: #136a42;
   --brand-50: #e6f2ec;
-  --good: #1a7f4b;
+  --good: #146c3f;
   --good-bg: #e3f4ea;
   --warn: #9a6100;
   --warn-bg: #fdf1d8;
@@ -36,6 +36,8 @@ body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--
   -webkit-font-smoothing: antialiased; }
 a { color: var(--brand-600); text-decoration: none; }
 a:hover { text-decoration: underline; }
+/* links inside text and tables must not rely on colour alone (WCAG 1.4.1) */
+td a:not(.btn), p a:not(.btn), li a:not(.btn), dd a:not(.btn) { text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); text-underline-offset: 2px; }
 h1 { font-size: 1.5rem; margin: 0; letter-spacing: -0.01em; }
 h2 { font-size: 1.02rem; margin: 0; }
 h3 { font-size: .95rem; margin: 0 0 .5rem; }

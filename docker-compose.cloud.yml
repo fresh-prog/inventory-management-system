@@ -25,7 +25,7 @@ services:
       APP_DEPLOYMENT_PROFILE: cloud
     secrets: [db_password]
     # migrate the control plane AND every branch replica schema before serving (upgrade the cloud first)
-    command: ["sh", "-c", "export APP_DATABASE_URL=postgresql+psycopg://app:$$(cat /run/secrets/db_password)@db:5432/restaurant_cloud && python -m app.cloud.cli migrate && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers"]
+    command: ["sh", "-c", "export APP_DATABASE_URL=postgresql+psycopg://app:$$(cat /run/secrets/db_password)@db:5432/restaurant_cloud && python -m app.cloud.cli migrate && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${APP_WORKERS:-4} --proxy-headers"]
     expose: ["8000"]
     volumes: [cloudfiles:/data/files]
 

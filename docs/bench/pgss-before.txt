@@ -1,0 +1,12 @@
+ calls | total_s | mean_ms |                                                     query                                                      
+-------+---------+---------+----------------------------------------------------------------------------------------------------------------
+    27 |    20.8 |   772.0 | SELECT purchase_invoice.id, purchase_invoice.branch_id, purchase_invoice.supplier_id, purchase_invoice.invoice
+   540 |     4.3 |     8.0 | SELECT purchase_line.invoice_id AS purchase_line_invoice_id, purchase_line.id AS purchase_line_id, purchase_li
+   100 |     4.3 |    43.1 | SELECT pg_advisory_xact_lock($1)
+    52 |     1.2 |    23.5 | SELECT stock_batch.stock_item_id, sum(stock_batch.remaining_quantity) AS sum_1, sum(stock_batch.remaining_quan
+    14 |     1.1 |    77.0 | SELECT stock_movement.id, stock_movement.branch_id, stock_movement.stock_item_id, stock_movement.type, stock_m
+    50 |     0.6 |    12.8 | SELECT ingredient.id, ingredient.code, ingredient.name, ingredient.category_id, ingredient.description, ingred
+    52 |     0.6 |    11.0 | SELECT coalesce(sum(stock_batch.remaining_quantity * stock_batch.unit_cost), $1::INTEGER) AS coalesce_1 FROM s
+    12 |     0.3 |    28.0 | SELECT ingredient_price_history.id, ingredient_price_history.ingredient_id, ingredient_price_history.branch_id
+(8 rows)
+

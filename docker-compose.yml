@@ -15,22 +15,24 @@ services:
       retries: 10
 
   app:
-    build: .
+    image: ${KL_IMAGE:-kitchenledger}:${KL_VERSION:-latest}
+    build: { context: ., args: { VERSION: "${KL_VERSION:-dev}" } }
     restart: unless-stopped
     depends_on: { db: { condition: service_healthy } }
     env_file: .env
     environment:
       APP_ENV: production
+      APP_BACKUP_DIR: /backups
     secrets: [db_password]
     # the database password is read from a Docker secret, never stored in the image or .env
-    command: ["sh", "-c", "export APP_DATABASE_URL=postgresql+psycopg://app:$$(cat /run/secrets/db_password)@db:5432/restaurant && alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers"]
+    command: ["sh", "-c", "export APP_DATABASE_URL=postgresql+psycopg://app:$$(cat /run/secrets/db_password)@db:5432/restaurant && alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${APP_WORKERS:-4} --proxy-headers"]
     expose: ["8000"]
-    volumes: [files:/data/files]
+    volumes: [files:/data/files, "backups:/backups:ro"]
 
   # Background cloud synchronisation. Optional: the restaurant works without it. Safe to restart
   # at any time; it resumes from the durable outbox.
   sync:
-    build: .
+    image: ${KL_IMAGE:-kitchenledger}:${KL_VERSION:-latest}
     restart: unless-stopped
     depends_on: [app]
     env_file: .env
@@ -39,6 +41,24 @@ services:
     secrets: [db_password]
     command: ["sh", "-c", "export APP_DATABASE_URL=postgresql+psycopg://app:$$(cat /run/secrets/db_password)@db:5432/restaurant && exec python -m app.sync.worker"]
     volumes: [files:/data/files]
+
+  # Scheduled encrypted backups of the database + documents, with a daily restore test.
+  backup:
+    build: { context: ., dockerfile: deploy/backup/Dockerfile }
+    restart: unless-stopped
+    depends_on: { db: { condition: service_healthy } }
+    environment:
+      PGHOST: db
+      PGUSER: app
+      PGDATABASE: restaurant
+      PGPASSFILE: /run/secrets/pgpass
+      BACKUP_FILES_DIR: /data/files
+      BACKUP_PASSPHRASE_FILE: /run/secrets/backup_passphrase
+      BACKUP_OFFSITE_DIR: /offsite          # mount a USB disk / network share here (see DR guide)
+      BACKUP_INTERVAL_HOURS: "6"
+      BACKUP_KEEP: "60"
+    secrets: [pgpass, backup_passphrase]
+    volumes: [files:/data/files:ro, backups:/backups, "${OFFSITE_PATH:-./offsite}:/offsite"]
 
   caddy:
     image: caddy:2-alpine
@@ -53,8 +73,13 @@ services:
 secrets:
   db_password:
     file: ./secrets/db_password.txt
+  pgpass:  # "db:5432:restaurant:app:<password>" (chmod 600)
+    file: ./secrets/pgpass
+  backup_passphrase:  # keep a copy OFF this server — without it backups cannot be restored
+    file: ./secrets/backup_passphrase.txt
 
 volumes:
   dbdata:
   caddydata:
-  files:  # receipts and documents — back up together with the database
+  files:  # receipts and documents — backed up by the backup service
+  backups:

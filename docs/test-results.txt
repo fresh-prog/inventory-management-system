@@ -1,6 +1,6 @@
-# Test results — Stage 3 (hybrid sync) — 2026-11-21T15:09Z
+# Test results — v0.4.0 (Stage 4) — 2026-11-22T01:47Z
 
-## Backend (pytest; real PostgreSQL 16; cloud = real uvicorn server on its own database)
+## Backend: pytest on real PostgreSQL 16 (unit, API, sync with a real cloud server, security, integrity, recovery, migrations, ops)
 tests/test_api_auth.py::test_setup_runs_once_and_login_works PASSED
 tests/test_api_auth.py::test_wrong_password_is_generic_and_locks_out PASSED
 tests/test_api_auth.py::test_requires_token PASSED
@@ -34,11 +34,48 @@ tests/test_api_purchases.py::test_concurrent_payments_cannot_overpay PASSED
 tests/test_api_purchases.py::test_void_payment_and_purchase PASSED
 tests/test_api_purchases.py::test_cannot_void_consumed_purchase PASSED
 tests/test_api_purchases.py::test_history_tables_are_append_only PASSED
+tests/test_api_purchases.py::test_purchase_list_filters_and_paginates_in_sql_consistently PASSED
 tests/test_api_recipes.py::test_recipe_cost_portion_price_and_yield PASSED
 tests/test_api_recipes.py::test_brief_example_recommended_price PASSED
 tests/test_api_recipes.py::test_publish_and_cost_change_creates_snapshots_preserving_history PASSED
 tests/test_api_recipes.py::test_cannot_publish_without_prices PASSED
 tests/test_api_recipes.py::test_cost_preview_writes_nothing PASSED
+tests/test_api_recipes.py::test_recipe_list_cost_equals_live_cost_including_conversion_changes PASSED
+tests/test_audit_integrity.py::test_randomized_operations_match_independent_model[11] PASSED
+tests/test_audit_integrity.py::test_randomized_operations_match_independent_model[23] PASSED
+tests/test_audit_integrity.py::test_randomized_operations_match_independent_model[47] PASSED
+tests/test_audit_integrity.py::test_every_purchase_line_has_exactly_one_matching_batch_and_receipt PASSED
+tests/test_audit_integrity.py::test_every_stock_movement_has_a_traceable_source PASSED
+tests/test_audit_integrity.py::test_history_is_never_rewritten PASSED
+tests/test_audit_integrity.py::test_recipe_costing_uses_current_basis_not_fifo PASSED
+tests/test_audit_integrity.py::test_failure_at_any_point_rolls_back_everything[purchase-app.services.purchasing._ledger] PASSED
+tests/test_audit_integrity.py::test_failure_at_any_point_rolls_back_everything[purchase-app.services.purchasing.receive] PASSED
+tests/test_audit_integrity.py::test_failure_at_any_point_rolls_back_everything[purchase-app.services.recipes.recalc_for_ingredients] PASSED
+tests/test_audit_integrity.py::test_failure_at_any_point_rolls_back_everything[purchase-app.services.purchasing.audit] PASSED
+tests/test_audit_integrity.py::test_failure_at_any_point_rolls_back_everything[consume-app.services.inventory.StockAllocation] PASSED
+tests/test_audit_integrity.py::test_failure_at_any_point_rolls_back_everything[production-app.services.stock_ops.audit] PASSED
+tests/test_audit_integrity.py::test_failure_at_any_point_rolls_back_everything[payment-app.services.purchasing.PaymentAllocation] PASSED
+tests/test_audit_integrity.py::test_failure_at_any_point_rolls_back_everything[count-app.services.stock_ops.receive] PASSED
+tests/test_audit_integrity.py::test_failure_at_any_point_rolls_back_everything[void-app.services.purchasing.recompute_current_cost] PASSED
+tests/test_audit_security.py::test_every_non_public_route_requires_authentication PASSED
+tests/test_audit_security.py::test_viewer_cannot_change_anything PASSED
+tests/test_audit_security.py::test_role_matrix_enforced_by_backend[kitchen-forbidden0] PASSED
+tests/test_audit_security.py::test_role_matrix_enforced_by_backend[purchaser-forbidden1] PASSED
+tests/test_audit_security.py::test_role_matrix_enforced_by_backend[manager-forbidden2] PASSED
+tests/test_audit_security.py::test_privilege_escalation_attempts PASSED
+tests/test_audit_security.py::test_sql_injection_probes_are_inert PASSED
+tests/test_audit_security.py::test_cross_branch_access_to_files_counts_and_payments PASSED
+tests/test_audit_security.py::test_absurd_numbers_are_rejected_not_crashing[/payments-body0] PASSED
+tests/test_audit_security.py::test_absurd_numbers_are_rejected_not_crashing[/purchases-body1] PASSED
+tests/test_audit_security.py::test_absurd_numbers_are_rejected_not_crashing[/supplier-credits-body2] PASSED
+tests/test_audit_security.py::test_absurd_numbers_are_rejected_not_crashing[/payments-body3] PASSED
+tests/test_audit_security.py::test_oversized_inputs_are_rejected PASSED
+tests/test_audit_security.py::test_no_password_hashes_or_stack_traces_leak PASSED
+tests/test_audit_security.py::test_security_headers_on_api_and_files PASSED
+tests/test_audit_security.py::test_disguised_and_dangerous_uploads_rejected PASSED
+tests/test_audit_security.py::test_login_is_rate_limited_per_client PASSED
+tests/test_audit_security.py::test_production_hides_api_docs_and_health_details PASSED
+tests/test_capture_always_on.py::test_capture_is_active_in_a_bare_process PASSED
 tests/test_costing.py::test_brief_example_recommended_price PASSED
 tests/test_costing.py::test_batch_cost_per_portion_food_cost_and_contribution PASSED
 tests/test_costing.py::test_net_quantity_grossed_up_once PASSED
@@ -51,11 +88,17 @@ tests/test_fifo.py::test_shortfall_policy_records_uncovered_quantity PASSED
 tests/test_fifo.py::test_same_timestamp_uses_sequence_tiebreak PASSED
 tests/test_fifo.py::test_skips_quarantined_empty_and_other_branch PASSED
 tests/test_fifo.py::test_rejects_bad_quantity_and_mixed_currency PASSED
+tests/test_migrations.py::test_failed_migration_leaves_previous_revision_intact PASSED
+tests/test_migrations.py::test_every_migration_downgrades_and_upgrades_cleanly PASSED
+tests/test_ops.py::test_metrics_disabled_without_token_and_protected PASSED
+tests/test_ops.py::test_metrics_report_backlog_backup_age_and_disk PASSED
 tests/test_payables_invoice.py::test_outstanding_counts_only_posted_items PASSED
 tests/test_payables_invoice.py::test_over_allocation_and_duplicates_rejected PASSED
 tests/test_payables_invoice.py::test_invoice_arithmetic PASSED
 tests/test_payables_invoice.py::test_invoice_mismatch_reported PASSED
-tests/test_recovery.py::test_backup_and_restore_round_trip PASSED
+tests/test_recovery.py::test_encrypted_backup_offsite_copy_and_verified_restore PASSED
+tests/test_recovery.py::test_tampered_backup_is_detected PASSED
+tests/test_recovery.py::test_restore_detects_business_corruption PASSED
 tests/test_sync.py::test_every_transaction_is_identified_and_written_atomically PASSED
 tests/test_sync.py::test_writes_require_a_registered_unrevoked_device PASSED
 tests/test_sync.py::test_offline_day_then_full_convergence PASSED
@@ -80,20 +123,25 @@ tests/test_sync.py::test_restored_branch_that_skips_the_runbook_is_halted_not_me
 tests/test_sync.py::test_extended_offline_period_drains_in_batches PASSED
 tests/test_sync.py::test_cloud_people_api_requires_mfa_and_isolates_branches PASSED
 tests/test_sync.py::test_delete_and_reinsert_of_same_row_in_one_transaction_replicates PASSED
+tests/test_sync.py::test_batches_are_bounded_by_size_and_still_converge PASSED
+tests/test_sync.py::test_compressed_batches_are_size_capped_against_zip_bombs PASSED
 tests/test_units.py::test_same_dimension_conversions PASSED
 tests/test_units.py::test_mass_to_volume_refused_without_rule PASSED
 tests/test_units.py::test_mass_volume_with_density_rule_both_directions PASSED
 tests/test_units.py::test_count_to_mass_rule PASSED
 tests/test_units.py::test_rejects_float_and_unknown_unit PASSED
 tests/test_units.py::test_rule_must_cross_dimensions PASSED
-============================= 85 passed in 50.33s ==============================
+================ 130 passed, 223 warnings in 121.00s (0:02:01) =================
 
-## Frontend unit tests (vitest) and type check
- Test Files  1 passed (1)
-      Tests  4 passed (4)
+## Dependency audits
+No known vulnerabilities found
+found 0 vulnerabilities
+
+## Frontend
 tsc: no errors
+      Tests  5 passed (5)
 
-## End-to-end UI — MVP flows (Playwright; branch server with demo data)
+## End-to-end UI (Playwright)
   ✓ 1. login + dashboard
   ✓ 2. ingredient list, FIFO batches, price history
   ✓ 3. recipe costing, cost history, editor
@@ -108,18 +156,14 @@ tsc: no errors
   ✓ 12. server unreachable → red indicator, draft restored from IndexedDB
 All 12 UI checks passed.
 
-## End-to-end UI — two-server sync flows (recorded during this session; branch :8000, cloud :8100, worker process)
-connect phase:
-  ✓ cloud sign-in requires password + authenticator code
-  ✓ branch created in cloud, one-time registration code
-  ✓ branch registered from its Settings screen; initial snapshot acknowledged
-  ✓ receipt stored locally first, then uploaded and checksum-verified
-offline phase (cloud process killed):
-  ✓ cloud is down: branch still records usage (FIFO) normally
-  ✓ indicator shows unsynchronised changes; queue visible with retry/backoff; no false success
-recovered phase (cloud restarted + background worker):
-  ✓ background worker drained the queue after the cloud came back
-  ✓ central overview, branch dashboard from replica (data-as-of label), sync monitor
-  ✓ HQ queued two ingredient changes while the branch edited Eggs
-  ✓ Salt change applied at the branch; Eggs change marked conflict (branch edit kept)
-live databases compared row-by-row afterwards: 1 table diverged (supplier_ingredient) -> bug fixed + regression test -> 482/482 rows identical
+## Accessibility (axe-core, WCAG 2.1 A/AA)
+0 violation instances across 28 page views
+
+## Failure simulation (scripts/chaos/run_chaos.py; real PostgreSQL crash, kill -9, outages)
+PASS power interruption (PostgreSQL crash + API kill -9 during writes; back in 1.6s)
+PASS local server restart (API kill -9 under load)
+PASS database unavailable (stopped while the app runs)
+PASS disk full while saving a receipt
+PASS failed invoice upload (connection lost mid-upload)
+
+## Benchmarks: see docs/PERFORMANCE.md and docs/bench/

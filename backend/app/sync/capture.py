@@ -45,8 +45,14 @@ def _record(op: str):
     return handler
 
 
-for _op in ("insert", "update", "delete"):
-    event.listen(Base, f"after_{_op}", _record(_op), propagate=True)
+_HANDLERS = {op: _record(op) for op in ("insert", "update", "delete")}
+for _op, _h in _HANDLERS.items():
+    event.listen(Base, f"after_{_op}", _h, propagate=True)
+
+
+def hooks_registered() -> bool:
+    return all(event.contains(Base, f"after_{op}", h) for op, h in _HANDLERS.items()) and \
+        event.contains(Session, "before_commit", _write_outbox)
 
 
 def image(obj, mapper: Mapper, table: str) -> dict:

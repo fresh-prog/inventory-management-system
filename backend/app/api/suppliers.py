@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..errors import Conflict, NotFound
-from ..jsonenc import enc
+from ..jsonenc import J, enc
 from ..models import PurchaseInvoice, Supplier, SupplierLedgerEntry, SupplierPayment
 from ..schemas.inputs import SupplierIn
 from ..security import Principal, require
@@ -37,7 +37,7 @@ def list_suppliers(q: str | None = None, p: Principal = Depends(require("supplie
     totals = dict(db.execute(select(PurchaseInvoice.supplier_id, func.sum(PurchaseInvoice.total))
                              .where(PurchaseInvoice.branch_id == p.branch.id, PurchaseInvoice.status == "confirmed")
                              .group_by(PurchaseInvoice.supplier_id)).all())
-    return enc([{**supplier_out(s, balances.get(s.id, 0)), "total_purchases": totals.get(s.id, 0)}
+    return J([{**supplier_out(s, balances.get(s.id, 0)), "total_purchases": totals.get(s.id, 0)}
                 for s in db.scalars(stmt)])
 
 
@@ -53,7 +53,7 @@ def create(body: SupplierIn, p: Principal = Depends(require("supplier.write")), 
     audit(db, p, "supplier.create", "supplier", s.id, {"name": s.name})
     emit(db, p.branch.id, "supplier.upserted", s.id, {"id": s.id, "version": s.version})
     db.commit()
-    return enc(supplier_out(s, 0))
+    return J(supplier_out(s, 0), 201)
 
 
 @router.put("/{supplier_id}")
@@ -73,7 +73,7 @@ def update(supplier_id: uuid.UUID, body: SupplierIn, if_match: int | None = Head
     audit(db, p, "supplier.update", "supplier", s.id, body.model_dump())
     emit(db, p.branch.id, "supplier.upserted", s.id, {"id": s.id, "version": s.version})
     db.commit()
-    return enc(supplier_out(s, supplier_balance(db, p.branch.id, s.id)))
+    return J(supplier_out(s, supplier_balance(db, p.branch.id, s.id)))
 
 
 @router.get("/{supplier_id}")
@@ -97,7 +97,7 @@ def get(supplier_id: uuid.UUID, p: Principal = Depends(require("supplier.read"))
         statement.append({"posted_at": e.posted_at, "type": e.entry_type, "description": e.description,
                           "amount": e.amount, "balance": running, "source_id": e.source_id})
     confirmed = [i for i in invs if i.status == "confirmed"]
-    return enc({**supplier_out(s, supplier_balance(db, p.branch.id, s.id)),
+    return J({**supplier_out(s, supplier_balance(db, p.branch.id, s.id)),
                 "total_purchases": sum((i.total for i in confirmed), 0),
                 "total_paid": sum((pp.amount for pp in pays if pp.status == "confirmed"), 0),
                 "invoices": invoices, "payments": [payment_out(x) for x in pays], "statement": statement})

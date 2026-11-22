@@ -148,8 +148,11 @@ def update_ingredient(db: Session, p: Principal, ing: Ingredient, data: dict, if
             raise BusinessRuleError("The stock dimension cannot change once prices or stock exist.")
         ing.base_dimension = data["base_dimension"]
         stock_item_for(db, ing.id).base_dimension = data["base_dimension"]
+    conversions_changed = False
     if data.get("conversions") is not None:
+        old = sorted((c.from_unit, str(c.from_qty), c.to_unit, str(c.to_qty)) for c in ing.conversions)
         _apply_conversions(db, ing, data["conversions"])
+        conversions_changed = old != sorted((c.from_unit, str(c.from_qty), c.to_unit, str(c.to_qty)) for c in ing.conversions)
     check_unit_usable(ing, ing.purchase_unit)
     check_unit_usable(ing, ing.consumption_unit)
     if "min_stock" in data:
@@ -163,6 +166,9 @@ def update_ingredient(db: Session, p: Principal, ing: Ingredient, data: dict, if
     except IntegrityError:
         db.rollback()
         raise Conflict("Another ingredient already uses this code.")
+    if conversions_changed:  # recipe lines in other units now cost differently
+        from .recipes import recalc_for_ingredients
+        recalc_for_ingredients(db, p.branch, [ing.id], f"conversion rule changed: {ing.name}")
     audit(db, p, "ingredient.update", "ingredient", ing.id, {"before": before, "version": ing.version})
     emit(db, p.branch.id, "ingredient.upserted", ing.id, {"id": ing.id, "version": ing.version})
     return ing

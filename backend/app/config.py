@@ -17,9 +17,11 @@ class Settings(BaseSettings):
     deployment_profile: str = "branch"  # branch | cloud
     files_dir: str = "./data/files"  # local document storage (receipts)
     max_upload_mb: int = 10
+    min_free_mb: int = 200  # refuse new documents below this free space (the database needs room)
     # cloud profile only: master key deriving per-branch sync secrets (keep secret, 32+ chars)
     cloud_master_key: str = "dev-only-cloud-master-key-change-me"
     sync_batch_size: int = 100
+    sync_max_batch_bytes: int = 2_000_000
     sync_max_backoff_seconds: int = 900
     outbox_retention_days: int = 90
     # abuse protection (per client IP, per process)
@@ -27,6 +29,8 @@ class Settings(BaseSettings):
     rate_limit_api_per_minute: int = 1200
     rate_limit_register_per_hour: int = 30  # cloud: registration-code guessing
     app_version: str = "0.4.0"
+    metrics_token: str | None = None  # enables GET /api/v1/metrics for Prometheus
+    backup_dir: str | None = None  # where scripts/backup.sh writes (for the backup-age metric)
 
     def validate_for_production(self) -> None:
         if self.env != "production":
