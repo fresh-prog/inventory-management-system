@@ -11,6 +11,7 @@ from ..domain.fifo import (
     InsufficientStockError, InsufficientStockPolicy, StockBatch as DomainBatch, allocate_fifo,
 )
 from ..errors import BusinessRuleError, InsufficientStock
+from ..ids import uuid7
 from ..models import Ingredient, IngredientCurrentCost, StockAllocation, StockBatch, StockItem, StockMovement
 from ..security import Principal
 from .common import ZERO, money, now, qty
@@ -61,7 +62,7 @@ def consume(db: Session, p: Principal, item: StockItem, quantity_base: Decimal, 
             movement_type: str, source_type: str, source_id: uuid.UUID | None,
             reason: str | None = None, note: str | None = None,
             allow_shortfall: bool = False, occurred_at: datetime | None = None,
-            label: str = "") -> StockMovement:
+            label: str = "", movement_id: uuid.UUID | None = None) -> StockMovement:
     """Deduct ``quantity_base`` from the oldest eligible batches (FIFO) and record it."""
     if quantity_base <= 0:
         raise BusinessRuleError("Quantity must be positive")
@@ -95,7 +96,7 @@ def consume(db: Session, p: Principal, item: StockItem, quantity_base: Decimal, 
         cur = db.get(IngredientCurrentCost, (item.ingredient_id, p.branch.id)) if item.ingredient_id else None
         shortfall_cost = result.shortfall * Decimal(cur.cost_per_base_unit if cur else 0)
     mv = StockMovement(
-        branch_id=p.branch.id, stock_item_id=item.id, type=movement_type,
+        id=movement_id or uuid7(), branch_id=p.branch.id, stock_item_id=item.id, type=movement_type,
         quantity=-quantity_base, total_cost=-money(fifo_cost + shortfall_cost),
         shortfall_quantity=result.shortfall, currency=p.branch.currency, reason=reason, note=note,
         source_type=source_type, source_id=source_id, created_by=p.user.id,

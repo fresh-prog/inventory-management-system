@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..domain.costing import QuantityBasis, RecipeLine as DLine, gross_quantity
 from ..errors import BusinessRuleError, NotFound
+from ..ids import uuid7
 from ..models import (
     Ingredient, IngredientCurrentCost, ProductionRun, Recipe, RecipeVersion, StockCount, StockCountLine,
     StockItem,
@@ -59,8 +60,9 @@ def record_adjustment(db: Session, p: Principal, data: dict) -> dict:
     ing = get_ingredient(db, data["ingredient_id"])
     item = stock_item_for(db, ing.id)
     base = qty(to_base_qty(ing, data["quantity"], data["unit"]))
-    mv = consume(db, p, item, base, movement_type="adjustment", source_type="adjustment", source_id=None,
-                 reason=data["reason"], note=data.get("note"), label=ing.name)
+    mid = uuid7()  # an adjustment is its own source document (traceable via its audit entry)
+    mv = consume(db, p, item, base, movement_type="adjustment", source_type="adjustment", source_id=mid,
+                 reason=data["reason"], note=data.get("note"), label=ing.name, movement_id=mid)
     audit(db, p, "stock.adjust", "stock_movement", mv.id,
           {"ingredient": ing.name, "quantity": data["quantity"], "unit": data["unit"], "reason": data["reason"]})
     emit(db, p.branch.id, "stock.adjusted", mv.id, {"id": mv.id, "reason": data["reason"]})

@@ -24,7 +24,8 @@ router = APIRouter(prefix="/stock", tags=["stock & inventory"])
 def levels(include_inactive: bool = False, p: Principal = Depends(require("stock.read")),
            db: Session = Depends(get_db)):
     rows = stock_levels(db, p.branch.id, include_inactive)
-    total = sum((r["inventory_value"] for r in rows), Decimal("0.0000"))
+    from ..services.reports import inventory_value
+    total = inventory_value(db, p.branch.id)  # same definition as the dashboard (exact sum, rounded once)
     return enc({"cost_basis": "fifo", "total_value": total, "items": rows})
 
 

@@ -3,6 +3,9 @@ import uuid
 
 os.environ.setdefault("APP_DATABASE_URL", "postgresql+psycopg://app:app@localhost:5432/restaurant_test")
 os.environ.setdefault("APP_ENV", "test")
+os.environ.setdefault("APP_RATE_LIMIT_API_PER_MINUTE", "1000000")
+os.environ.setdefault("APP_RATE_LIMIT_LOGIN_PER_MINUTE", "100000")
+os.environ.setdefault("APP_RATE_LIMIT_REGISTER_PER_HOUR", "100000")
 import tempfile  # noqa: E402
 os.environ.setdefault("APP_FILES_DIR", tempfile.mkdtemp(prefix="kl-files-"))
 

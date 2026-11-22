@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     sync_batch_size: int = 100
     sync_max_backoff_seconds: int = 900
     outbox_retention_days: int = 90
+    # abuse protection (per client IP, per process)
+    rate_limit_login_per_minute: int = 20
+    rate_limit_api_per_minute: int = 1200
+    rate_limit_register_per_hour: int = 30  # cloud: registration-code guessing
+    app_version: str = "0.4.0"
 
     def validate_for_production(self) -> None:
         if self.env != "production":

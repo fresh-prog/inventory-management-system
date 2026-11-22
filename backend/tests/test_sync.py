@@ -17,6 +17,7 @@ from sqlalchemy import func, select, text, update
 
 from app.models import OutboxEvent, StoredFile, SyncState
 from app.sync import client as sync
+from app.sync.spec import SCHEMA_VERSION
 from conftest import buy, make_ingredient, make_supplier, make_user
 from sync_harness import CLOUD_URL, CloudServer, Flaky, assert_converged, cloud_api, prepare_cloud_db
 
@@ -96,7 +97,7 @@ def test_every_transaction_is_identified_and_written_atomically(owner, engine, m
     with engine.connect() as c:
         ev = c.execute(select(OutboxEvent).where(OutboxEvent.topic == "purchase.confirmed")).one()
     assert ev.device_id == uuid.UUID(owner.device) and ev.user_id is not None and ev.branch_id is not None
-    assert ev.schema_version == "0002sync" and ev.status == "pending" and ev.created_at is not None
+    assert ev.schema_version == SCHEMA_VERSION and ev.status == "pending" and ev.created_at is not None
     tables = {r["t"] for r in ev.payload["rows"]}
     assert {"purchase_invoice", "purchase_line", "stock_batch", "stock_movement", "supplier_ledger_entry",
             "ingredient_price_history", "ingredient_current_cost", "audit_log"} <= tables

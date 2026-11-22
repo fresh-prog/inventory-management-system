@@ -94,6 +94,7 @@ class StockMovement(Base):
                         name="adjustment_reason"),
         CheckConstraint("quantity <> 0", name="non_zero"),
         CheckConstraint("shortfall_quantity >= 0", name="shortfall"),
+        CheckConstraint("source_id IS NOT NULL", name="traceable"),
         Index("ix_movement_item_time", "stock_item_id", "branch_id", "occurred_at"),
     )
 
