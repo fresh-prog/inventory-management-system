@@ -179,6 +179,9 @@ def test_no_password_hashes_or_stack_traces_leak(owner, client, monkeypatch):
     r = TestClient(app, raise_server_exceptions=False).get("/api/v1/dashboard", headers=owner.h(False))
     assert r.status_code == 500
     assert "Traceback" not in r.text and "ZeroDivisionError" not in r.text and "reports.py" not in r.text
+    # the reference shown to the user must identify the request (it was "-" before the fix)
+    rid = r.json()["request_id"]
+    assert rid and rid != "-" and r.headers.get("x-request-id") == rid and rid in r.json()["detail"]
 
 
 def test_security_headers_on_api_and_files(owner):

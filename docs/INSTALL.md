@@ -2,9 +2,11 @@
 
 Sections: **A. Branch server** (one per restaurant, works offline) · **B. Cloud** (optional, one per organisation) · **C. Developer setup**.
 
-> The Docker files were written and syntax-checked, but **the image build was not executed in this
-> development environment (no Docker daemon was available)**. The developer setup below *was* run and
-> fully tested. Please run section A once on the target machine and report any issue.
+> **Windows with Docker Desktop:** use [INSTALL-WINDOWS.md](INSTALL-WINDOWS.md) (one-step setup script).
+>
+> Both Docker setups (branch and cloud) were built and run end-to-end in a Linux Docker engine:
+> HTTPS by name and by IP, 12 UI flows, backups with restore tests, restarts, a database crash, and branch↔cloud
+> sync including an outage. See [DOCKER-VERIFICATION.md](DOCKER-VERIFICATION.md).
 
 ## A. Branch server (Docker Compose)
 
@@ -20,20 +22,24 @@ cd inventory-management-system
 ```bash
 cp .env.example .env && openssl rand -hex 32
 ```
-Paste the generated value into `.env` as `APP_JWT_SECRET`. Then create the database password secret:
+Paste the generated value into `.env` as `APP_JWT_SECRET`. Record the release being installed (used to tag the images):
 ```bash
-openssl rand -base64 24 | tr -d '\n' > secrets/db_password.txt && chmod 600 secrets/db_password.txt
+echo "KL_VERSION=$(cat VERSION)" >> .env
+``` Then create the database password secret:
+```bash
+openssl rand -hex 24 | tr -d '\n' > secrets/db_password.txt && chmod 600 secrets/db_password.txt
 ```
 Backups (scheduled by the `backup` service) need two more secrets: a pgpass line for the database and the
 **backup passphrase**. Store a copy of the passphrase OFF the server: without it, backups cannot be restored.
 ```bash
-printf 'db:5432:restaurant:app:%s\n' "$(cat secrets/db_password.txt)" > secrets/pgpass && chmod 600 secrets/pgpass
+printf 'db:5432:*:app:%s\n' "$(cat secrets/db_password.txt)" > secrets/pgpass && chmod 600 secrets/pgpass
 ```
 ```bash
-openssl rand -base64 32 > secrets/backup_passphrase.txt && chmod 600 secrets/backup_passphrase.txt
+openssl rand -hex 32 > secrets/backup_passphrase.txt && chmod 600 secrets/backup_passphrase.txt
 ```
 Mount a USB disk or network share for off-site copies and set `OFFSITE_PATH` in `.env` (see DISASTER-RECOVERY.md).
-Set `APP_METRICS_TOKEN` in `.env` to enable monitoring (DEPLOYMENT.md).
+Set `APP_METRICS_TOKEN` in `.env` to enable monitoring (DEPLOYMENT.md), and `SERVER_IP` to this server's
+fixed LAN address so phones and tablets can open `https://<SERVER_IP>/`.
 ```bash
 docker compose up -d --build
 ```
@@ -51,22 +57,24 @@ The `sync` service (cloud synchronisation worker) idles until the branch is conn
 Receipts are stored in the `files` volume: back it up together with the database.
 Keep the server's clock correct (NTP), because cloud requests are time-stamped and signed.
 
-### Backups (do this before go-live)
-Run `pg_dump` inside the database container, so the client and server versions always match:
+### Backups (automatic — check before go-live)
+The `backup` service makes an encrypted backup of the database **and** receipts every 6 hours, copies it to
+`OFFSITE_PATH`, and once a day restores the newest backup into a scratch database and checks it
+(see [DISASTER-RECOVERY.md](DISASTER-RECOVERY.md)). Before go-live, confirm it works:
 ```bash
-mkdir -p backups && docker compose exec -T db pg_dump -U app -Fc restaurant > "backups/restaurant-$(date +%F).dump"
+docker compose logs backup
 ```
-Encrypt it before copying it off the machine (keep the passphrase file somewhere other than the server):
+You should see `backup ok` and `verify_restore: PASSED`. Run a check of the newest backup at any time:
 ```bash
-openssl enc -aes-256-cbc -pbkdf2 -salt -in "backups/restaurant-$(date +%F).dump" -out "backups/restaurant-$(date +%F).dump.enc" -pass file:/root/backup-passphrase
+docker compose exec backup sh -c '/scripts/verify_restore.sh "$(ls -d /backups/restaurant-* | tail -1)"'
 ```
-* Schedule both nightly (cron on the host). Copy the `.enc` files to a USB drive or cloud storage.
-* Outside Docker, `scripts/backup.sh` does the same (dump, verify, checksum, optional encryption, keep 30); it is the script exercised by the automated recovery test.
-* **Restore test** (monthly): restore into a *new* database (`scripts/restore.sh <file> restaurant_restore_test`, or `pg_restore` inside the db container), point a test instance at it and open **Reports → Data checks**. All checks must pass.
+A failed restore test sets `kl_restore_test_failed 1` in the metrics and triggers the `RestoreTestFailed` alert.
 
 ### Upgrading
+Use `scripts/deploy/deploy.sh <version>` (pre-deploy backup with restore test, health check, automatic rollback;
+see [DEPLOYMENT.md](DEPLOYMENT.md)). Manually:
 1. Take a backup and verify it (above).
-2. `git pull && docker compose up -d --build`. Migrations run automatically and are forward-only.
+2. `git pull && docker compose up -d --build`. Migrations run automatically, each in its own transaction.
 3. Open **Reports → Data checks**.
 
 ## B. Cloud (optional: remote reports, off-site copy, remote management)
@@ -78,8 +86,17 @@ cp .env.cloud.example .env.cloud
 Fill in `.env.cloud`: two different values from `openssl rand -hex 32` for `APP_JWT_SECRET` and `APP_CLOUD_MASTER_KEY`, plus `CLOUD_DOMAIN`.
 Keep `APP_CLOUD_MASTER_KEY` safe: every branch's sync key is derived from it.
 ```bash
-openssl rand -base64 24 | tr -d '\n' > secrets/cloud_db_password.txt && chmod 600 secrets/cloud_db_password.txt
+openssl rand -hex 24 | tr -d '\n' > secrets/cloud_db_password.txt && chmod 600 secrets/cloud_db_password.txt
 ```
+Backups of the cloud (users, roles, settings, branch replicas) need a pgpass line and their own passphrase.
+Keep the passphrase OFF the cloud server:
+```bash
+printf 'db:5432:*:app:%s\n' "$(cat secrets/cloud_db_password.txt)" > secrets/cloud_pgpass && chmod 600 secrets/cloud_pgpass
+```
+```bash
+openssl rand -hex 32 > secrets/cloud_backup_passphrase.txt && chmod 600 secrets/cloud_backup_passphrase.txt
+```
+Set `OFFSITE_PATH=<folder>` in a `.env` file next to `docker-compose.cloud.yml` (Compose reads it for paths): a mounted bucket or another server's share.
 ```bash
 docker compose -f docker-compose.cloud.yml up -d --build
 ```

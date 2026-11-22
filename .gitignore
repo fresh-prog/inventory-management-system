@@ -14,3 +14,6 @@ secrets/*
 .env.cloud
 data/
 frontend/*.tsbuildinfo
+offsite/
+restaurant-root.crt
+cloud-root.crt

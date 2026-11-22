@@ -33,7 +33,7 @@ Earlier stages: [MVP report](docs/MVP-REPORT.md) · [Sync test report](docs/SYNC
 
 | | |
 |---|---|
-| Install & operate | [docs/INSTALL.md](docs/INSTALL.md) · [sync recovery runbook](docs/SYNC-RUNBOOK.md) |
+| Install & operate | [docs/INSTALL.md](docs/INSTALL.md) · **Windows:** [docs/INSTALL-WINDOWS.md](docs/INSTALL-WINDOWS.md) (double-click `Setup-Windows.cmd`) · [Docker verification](docs/DOCKER-VERIFICATION.md) · [sync recovery runbook](docs/SYNC-RUNBOOK.md) |
 | API | [docs/API.md](docs/API.md) · OpenAPI [branch](docs/api/openapi.json) / [cloud](docs/api/openapi-cloud.json) · live at `/api/docs` |
 | Database | [migration](backend/migrations/versions/) · [design](docs/02-database-design.md) |
 | Test results | [docs/test-results.txt](docs/test-results.txt) |

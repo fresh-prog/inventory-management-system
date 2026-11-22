@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     rate_limit_login_per_minute: int = 20
     rate_limit_api_per_minute: int = 1200
     rate_limit_register_per_hour: int = 30  # cloud: registration-code guessing
-    app_version: str = "0.4.0"
+    app_version: str = "0.4.1"
     metrics_token: str | None = None  # enables GET /api/v1/metrics for Prometheus
     backup_dir: str | None = None  # where scripts/backup.sh writes (for the backup-age metric)
 

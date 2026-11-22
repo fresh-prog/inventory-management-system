@@ -26,6 +26,11 @@ groups:
         for: 30m
         labels: {severity: critical}
         annotations: {summary: "No successful backup in the last 26 hours on {{ $labels.instance }}"}
+      - alert: RestoreTestFailed
+        expr: kl_restore_test_failed == 1
+        for: 5m
+        labels: {severity: critical}
+        annotations: {summary: "The daily restore test of the newest backup FAILED on {{ $labels.instance }} (backups may be unusable)"}
       - alert: SyncRejected
         expr: kl_sync_events{status="failed"} > 0
         for: 5m

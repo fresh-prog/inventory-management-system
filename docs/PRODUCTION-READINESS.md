@@ -1,4 +1,4 @@
-# Production-Readiness Report — v0.4.0
+# Production-Readiness Report — v0.4.1
 
 Date: 2026-11-22 · Detailed findings: [AUDIT.md](AUDIT.md) · Test output: [test-results.txt](test-results.txt)
 
@@ -12,7 +12,7 @@ general release:
 
 | Gate | Status | Needed before |
 |---|---|---|
-| G1. Docker images built and run; full install on target branch hardware using `deploy.sh`; restore drill on that hardware | **Not done here** (no Docker daemon). The CI `image` job builds and smoke-tests the images. | Pilot |
+| G1. Docker install on the **target** branch PC (Windows: `Setup-Windows.cmd`); restore drill on that machine | **Partly done.** Both Docker setups (branch and cloud) were built and verified end to end on a Linux Docker engine — 17 checks incl. HTTPS by IP, UI flows, backups and restore tests, crash, sync with outage, and the documented recovery procedure; 9 defects found and fixed ([DOCKER-VERIFICATION.md](DOCKER-VERIFICATION.md)). **Remaining:** run the setup on the restaurant's own PC (the Windows script has not been executed on Windows) and connect real phones. | Pilot |
 | G2. Off-site backup to the real destination (USB/NAS/cloud bucket) verified with `verify_restore.sh` | Tested with a mounted directory only | Pilot |
 | G3. Legal and tax review (Uganda: PDPO registration, cross-border transfer, EFRIS; Eritrea: tax-record rules) | Research notes only (07-legal) | Pilot (with real customer data) |
 | G4. Independent penetration test | Not done | General release |
@@ -32,7 +32,7 @@ general release:
 | **Synchronisation** | ✅ | 26 sync tests (lost acks, restarts, cloud/branch restores, conflicts, zip-bomb cap, size-bounded batches); full-scale: **408,610 rows identical** after a throttled 2 Mbit/s offline backlog |
 | **Performance** | ✅ targets met | PERFORMANCE.md: 25 users ⇒ search p95 100 ms, usage 127 ms, purchase 258 ms, dashboard 412 ms; 60 users ⇒ 0 errors; phone screens ≤ 1.2 s |
 | **Backup & recovery** | ✅ (G1, G2 pending) | DISASTER-RECOVERY.md: encrypted DB + documents, off-site copy, tamper detection, daily restore test with amcheck and integrity SQL; 263 MB branch backed up in 16 s and restored in 22 s; RPO/RTO defined |
-| **Deployment readiness** | ⚠ G1 | DEPLOYMENT.md: dev/staging/prod, secrets, versioning, CI with audits and image smoke test, release pipeline with approval gate, migration safety (failure and rollback tested), metrics and alerting |
+| **Deployment readiness** | ⚠ G1 (on-site run) | DOCKER-VERIFICATION.md (17 checks on a real Docker engine); INSTALL-WINDOWS.md; DEPLOYMENT.md: dev/staging/prod, secrets, versioning, CI with audits and image smoke test, release pipeline with approval gate, migration safety (failure and rollback tested), metrics and alerting |
 | **Legal** | ⚠ G3 | 07-legal-and-compliance.md: research notes only, professional verification required |
 
 ## Application experience review

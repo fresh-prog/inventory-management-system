@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.1 — Docker verification and Windows installer
+Found by building and running both Docker setups end to end (see docs/DOCKER-VERIFICATION.md):
+* HTTPS now works when phones open the server by IP address (`SERVER_IP`).
+* Backups work with Docker Desktop's loose secret-file permissions; the daily restore test no longer waits forever
+  for a password; all backup commands are non-interactive.
+* The cloud now has its own backup service; the restore test checks every branch replica in a cloud backup.
+* A failed restore test now raises an alert (`kl_restore_test_failed`, `RestoreTestFailed`) and clears itself
+  after the next passing test.
+* Error references show the real request id (was "-"), also in the server log.
+* Images are tagged with the release; `.gitattributes` keeps scripts working on Windows checkouts; the backup image
+  needs no package downloads.
+
+**New:** one-step Windows installer (`Setup-Windows.cmd`) and guide `docs/INSTALL-WINDOWS.md`.
+
 ## 0.4.0 — Production hardening (Stage 4)
 **Critical fixes**
 * Change capture is always active wherever business data is written. Previously a process that did not import a web route wrote no sync records.

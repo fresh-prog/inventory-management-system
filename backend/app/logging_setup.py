@@ -45,6 +45,7 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         rid = request.headers.get("x-request-id") or uuid.uuid4().hex[:16]
         token = request_id_var.set(rid)
+        request.state.request_id = rid  # still readable by the outermost (500) error handler
         start = time.perf_counter()
         try:
             response = await call_next(request)

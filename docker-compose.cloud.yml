@@ -29,6 +29,26 @@ services:
     expose: ["8000"]
     volumes: [cloudfiles:/data/files]
 
+  # Scheduled encrypted backups of the cloud database + documents, with a daily restore test that checks
+  # every branch replica. Branches can re-send what the cloud lost, but users, roles and settings live here.
+  backup:
+    build: { context: ., dockerfile: deploy/backup/Dockerfile }
+    restart: unless-stopped
+    depends_on: { db: { condition: service_healthy } }
+    environment:
+      PGHOST: db
+      PGUSER: app
+      PGDATABASE: restaurant_cloud
+      PGPASS_SECRET: /run/secrets/pgpass   # copied to a private file by the entrypoint
+      PGPASSFILE: /tmp/pgpass
+      BACKUP_FILES_DIR: /data/files
+      BACKUP_PASSPHRASE_FILE: /run/secrets/backup_passphrase
+      BACKUP_OFFSITE_DIR: /offsite          # mount object storage / another server's share here
+      BACKUP_INTERVAL_HOURS: "6"
+      BACKUP_KEEP: "60"
+    secrets: [pgpass, backup_passphrase]
+    volumes: [cloudfiles:/data/files:ro, cloudbackups:/backups, "${OFFSITE_PATH:-./offsite}:/offsite"]
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -42,8 +62,13 @@ services:
 secrets:
   db_password:
     file: ./secrets/cloud_db_password.txt
+  pgpass:  # "db:5432:*:app:<password>"
+    file: ./secrets/cloud_pgpass
+  backup_passphrase:  # keep a copy OFF this server — without it backups cannot be restored
+    file: ./secrets/cloud_backup_passphrase.txt
 
 volumes:
   clouddb:
   cloudfiles:
+  cloudbackups:
   caddydata:

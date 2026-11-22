@@ -1,0 +1,12 @@
+# Files used inside Linux containers must keep Unix line endings, even when the repository is
+# cloned on Windows (Git for Windows converts to CRLF by default, which breaks shell scripts).
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.webp binary
+*.pdf binary
+*.ico binary
+*.gz binary

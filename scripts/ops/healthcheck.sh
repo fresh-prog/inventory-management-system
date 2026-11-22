@@ -10,6 +10,7 @@ val() { echo "$m" | awk -v k="$1" '$1==k {print $2}'; }
 if [[ -n "${m:-}" ]]; then
   [[ "$(val kl_database_up)" == "1" ]] || problems+=("database down")
   awk -v r="$(val kl_disk_free_ratio)" 'BEGIN{exit !(r < 0.10)}' && problems+=("disk under 10% free")
+  [[ "$(val kl_restore_test_failed)" == "1" ]] && problems+=("restore test of the newest backup FAILED")
   age=$(val kl_last_backup_age_seconds); { [[ "$age" == "-1" ]] || (( ${age%.*} > 93600 )); } && problems+=("no backup in 26h")
   [[ "$(echo "$m" | awk '$1=="kl_sync_events{status=\"failed\"}" {print $2}')" == "0" ]] || problems+=("sync: rejected change")
   [[ "$(val kl_sync_halted)" != "1" ]] || problems+=("sync halted")

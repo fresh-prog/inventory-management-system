@@ -36,3 +36,8 @@ def test_metrics_report_backlog_backup_age_and_disk(owner, tmp_path):
     assert 0 <= float(m["kl_last_backup_age_seconds"]) < 60
     assert 0 < float(m["kl_disk_free_ratio"]) <= 1
     assert m["kl_sync_halted"] == "0"
+    assert m["kl_restore_test_failed"] == "0"
+    (tmp_path / "RESTORE_TEST_FAILED").touch()  # written by the backup service when a restore test fails
+    body = TestClient(a).get("/api/v1/metrics", headers={"Authorization": "Bearer t0ken"}).text
+    a.state.engine.dispose()
+    assert "kl_restore_test_failed 1" in body.splitlines()

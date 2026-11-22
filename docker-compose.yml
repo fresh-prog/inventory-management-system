@@ -51,7 +51,8 @@ services:
       PGHOST: db
       PGUSER: app
       PGDATABASE: restaurant
-      PGPASSFILE: /run/secrets/pgpass
+      PGPASS_SECRET: /run/secrets/pgpass   # copied to a private file by the entrypoint
+      PGPASSFILE: /tmp/pgpass
       BACKUP_FILES_DIR: /data/files
       BACKUP_PASSPHRASE_FILE: /run/secrets/backup_passphrase
       BACKUP_OFFSITE_DIR: /offsite          # mount a USB disk / network share here (see DR guide)
@@ -73,7 +74,7 @@ services:
 secrets:
   db_password:
     file: ./secrets/db_password.txt
-  pgpass:  # "db:5432:restaurant:app:<password>" (chmod 600)
+  pgpass:  # "db:5432:*:app:<password>" (chmod 600)
     file: ./secrets/pgpass
   backup_passphrase:  # keep a copy OFF this server — without it backups cannot be restored
     file: ./secrets/backup_passphrase.txt

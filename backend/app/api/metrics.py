@@ -64,4 +64,7 @@ def metrics(request: Request, authorization: str | None = Header(default=None)):
     lines.append(f"kl_disk_free_bytes {du.free}")
     lines.append(f"kl_disk_free_ratio {du.free / du.total:.4f}")
     lines.append(f"kl_last_backup_age_seconds {_last_backup_age(s.backup_dir):.0f}")
+    # set by the backup service when the daily restore test fails; cleared by the next passing test
+    failed = bool(s.backup_dir) and (Path(s.backup_dir) / "RESTORE_TEST_FAILED").exists()
+    lines.append(f"kl_restore_test_failed {int(failed)}")
     return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain; version=0.0.4")

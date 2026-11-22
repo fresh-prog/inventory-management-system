@@ -30,7 +30,10 @@ The Compose `backup` service (PostgreSQL-16 tools, matching the server) runs thi
 6. **business-integrity SQL** (`scripts/sql/integrity.sql`), independent of the app code: FIFO batches vs allocations, supplier ledger vs invoices, over-payments, traceability, one published recipe version;
 7. documents archive.
 
-A failed restore test creates `RESTORE_TEST_FAILED` and alerts (`BackupMissing` / healthcheck).
+A failed restore test creates `RESTORE_TEST_FAILED` (removed again by the next passing test), reported as
+`kl_restore_test_failed 1` in the metrics: alert `RestoreTestFailed` and the cron health check.
+The cloud has the same `backup` service; its restore test checks **every branch replica** with the same
+business-integrity SQL.
 
 **The backup passphrase must be stored off the server** (e.g. owner's password manager plus a sealed paper
 copy). Without it the backups cannot be restored.
@@ -71,7 +74,8 @@ Manual rollback without a restore: `docker compose run --rm app alembic downgrad
 migration is tested to downgrade), then start the previous image tag.
 
 ### D. Cloud lost
-Restore the cloud database from its nightly backup (same scripts, `PGDATABASE=restaurant_cloud`) and start it.
+Restore the cloud database from its newest verified backup (the cloud's `backup` service; same procedure as A with
+`docker compose -f docker-compose.cloud.yml` and database `restaurant_cloud`) and start it.
 Branches detect the lower high-water mark and re-send automatically (SYNC-RUNBOOK §2.1).
 
 ## Drills

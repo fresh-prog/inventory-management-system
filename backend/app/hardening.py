@@ -90,13 +90,22 @@ def install_error_handlers(app) -> None:
         return await unexpected(_, exc)
 
     async def unexpected(request: Request, exc: Exception):
-        log.exception("unhandled error on %s %s", request.method, request.url.path)
+        # This handler runs outside the request-logging middleware, whose context has already been reset:
+        # take the id from the request so the user's reference matches the server log entry.
+        rid = getattr(request.state, "request_id", None) or request_id_var.get()
+        token = request_id_var.set(rid)
+        try:
+            log.exception("unhandled error on %s %s", request.method, request.url.path)
+        finally:
+            request_id_var.reset(token)
         if isinstance(exc, OSError) and getattr(exc, "errno", None) == 28:
             return problem(507, "STORAGE_FULL", "Storage full",
                            "The server's disk is full. Nothing was saved. Ask the administrator to free space.")
-        return problem(500, "INTERNAL_ERROR", "Something went wrong",
-                       f"An unexpected error occurred and nothing was saved. Reference: {request_id_var.get()}",
-                       request_id=request_id_var.get())
+        resp = problem(500, "INTERNAL_ERROR", "Something went wrong",
+                       f"An unexpected error occurred and nothing was saved. Reference: {rid}",
+                       request_id=rid)
+        resp.headers["x-request-id"] = rid
+        return resp
 
     app.add_exception_handler(DataError, data_error)
     app.add_exception_handler(DBAPIError, db_unavailable)

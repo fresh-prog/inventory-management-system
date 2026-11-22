@@ -1,10 +1,12 @@
 # HTTPS on the local network with Caddy's internal CA (no internet needed).
 # Install the root certificate on each device once (see docs/INSTALL.md), or replace
 # "tls internal" with a real domain when the server is reachable from the internet.
+# SERVER_IP is the server's LAN address, so phones and tablets can open https://<ip>/ (no DNS needed).
 {
 	auto_https disable_redirects
+	default_sni {$SERVER_IP:127.0.0.1}
 }
-https://{$SERVER_NAME:restaurant.local}, https://localhost {
+https://{$SERVER_NAME:restaurant.local}, https://localhost, https://{$SERVER_IP:127.0.0.1} {
 	tls internal
 	encode gzip
 	request_body {

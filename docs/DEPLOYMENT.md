@@ -17,7 +17,7 @@ The app refuses to start in production with a default or weak `APP_JWT_SECRET` (
 * Production hides `/api/docs` and the public health check shows no sync internals. Metrics need `APP_METRICS_TOKEN`.
 
 ## Release versioning
-Semantic versioning in `VERSION` (currently **0.4.0**), reported by `/api/v1/health/live` and baked into
+Semantic versioning in `VERSION` (currently **0.4.1**), reported by `/api/v1/health/live` and baked into
 the image (`APP_APP_VERSION`, OCI label). Database schema versions are Alembic revisions (`0004perf`),
 carried on every sync event. `CHANGELOG.md` lists every release.
 
@@ -57,6 +57,6 @@ carried on every sync event. `CHANGELOG.md` lists every release.
   * sync queue by status, oldest unsent, halted, last cloud success;
   * documents not yet in the cloud, low-stock count;
   * per-branch halted, last seen and apply errors (cloud).
-* `deploy/monitoring/alerts.yml`: Prometheus rules for database down, instance down, disk < 10% / < 3%, no backup in 26 h, sync rejected, sync halted, backlog older than 24 h, branch not seen for 6 h.
+* `deploy/monitoring/alerts.yml`: Prometheus rules for database down, instance down, disk < 10% / < 3%, no backup in 26 h, failed restore test, sync rejected, sync halted, backlog older than 24 h, branch not seen for 6 h.
 * No Prometheus? `scripts/ops/healthcheck.sh` from cron every 5 minutes posts problems to a webhook (Slack/Teams/ntfy/email gateway).
 * Logs: JSON lines with request id, method, path, status and duration. Errors are logged server-side with a reference id; users see only that reference (no stack traces).
